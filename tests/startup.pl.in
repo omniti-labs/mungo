@@ -1,0 +1,3 @@
+use lib '@@CHECKOUT@@/lib';
+use Mungo;
+1;
