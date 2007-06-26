@@ -22,7 +22,8 @@ sub new {
   return $singleton if ($singleton);
   my %core_data = (
     'Apache::Request' => $r,
-    'ContentType' => $r->dir_config('MungoContentType') || 'text/html',
+    'ContentType' => $r->dir_config('MungoContentType') ||
+                     $r->content_type || 'text/html',
     # We don't set buffer here, we set it after it has been tied.
     # 'Buffer' => $r->dir_config('MungoBuffer') || 0,
     'Buffer' => 0,
