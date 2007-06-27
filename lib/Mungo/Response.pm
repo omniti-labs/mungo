@@ -22,8 +22,7 @@ sub new {
   return $singleton if ($singleton);
   my %core_data = (
     'Apache::Request' => $r,
-    'ContentType' => $r->dir_config('MungoContentType') ||
-                     $r->content_type || 'text/html',
+    'ContentType' => $r->dir_config('MungoContentType') || $r->content_type || 'text/html',
     # We don't set buffer here, we set it after it has been tied.
     # 'Buffer' => $r->dir_config('MungoBuffer') || 0,
     'Buffer' => 0,
@@ -129,7 +128,8 @@ sub Include {
     }
   };
   if($@) {
-    print "<pre>Error: $@\n\n".Carp::shortmess()."\n</pre>\n";;
+    (my $error = HTML::Entities::encode(Carp::longmess())) =~ s/\n/<br \/>/gsm;
+    print "Error in Include($subject):<br />$@\n\n".$error."\n\n";;
     return undef;
   }
   return $rv;
