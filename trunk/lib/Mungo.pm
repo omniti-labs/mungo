@@ -13,6 +13,7 @@ use Data::Dumper;
 use Digest::MD5 qw/md5_hex/;
 use Mungo::Request;
 use Mungo::Response;
+use HTML::Entities;
 
 use vars qw/$VERSION
             $DEFAULT_POST_BLOCK $DEFAULT_POST_MAX_SIZE
@@ -117,7 +118,33 @@ sub include_file {
   }
   my %copy = %$self;
   my $page = bless \%copy, $pkg;
-  $page->content(@_);
+  eval { $page->content(@_); };
+  if($@) {
+    my $error = $@;
+    my $preamble = eval "\$${pkg}::Mungo_preamble;";
+    my $postamble = eval "\$${pkg}::Mungo_postamble;";
+    my $contents = eval "\$${pkg}::Mungo_contents;";
+    my ($line) = ($error =~ /line (\d+)/m);
+    die "$error\n\n".pretty_print_code($preamble, $contents, $postamble, $line);
+  }
+}
+sub pretty_print_code {
+  my ($preamble, $contents, $postamble, $line) = @_;
+  my $outer_line = 1;
+  my $inner_line = 1;
+  my $rv = '';
+  (my $numbered_preamble = $preamble) =~
+    s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
+  $rv .= qq^<pre style="color: #999">$numbered_preamble</pre>\n^;
+  (my $numbered_contents = $$contents) =~
+    s/^/sprintf("[%s%4d] %4d: ", ($outer_line == $line)?'*':' ',
+                $outer_line++, $inner_line++)/emg;
+  $numbered_contents = HTML::Entities::encode($numbered_contents);
+  $rv .= "<pre>$numbered_contents</pre>\n";
+  (my $numbered_postamble = $postamble) =~
+    s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
+  $rv .= qq^<pre style="color: #999">$numbered_postamble</pre>\n\n^;
+  return $rv;
 }
 sub packagize {
   my $self = shift;
@@ -149,19 +176,12 @@ sub packagize {
   if($@) {
      print "ERROR:<br><pre>$@</pre>\n\n";
      print "PRE PARSE:<br>\n";
-     my $outer_line = 1;
-     my $inner_line = 1;
-     (my $numbered_preamble = $preamble) =~
-       s/^/sprintf("[%4d]       ", $outer_line++)/emg;
-     print qq^<pre style="color: #999">$numbered_preamble</pre>\n^;
-     (my $numbered_contents = $$contents) =~
-       s/^/sprintf("[%4d] %4d: ", $outer_line++, $inner_line++)/emg;
-     print "<pre>$numbered_contents</pre>\n";
-     (my $numbered_postamble = $postamble) =~
-       s/^/sprintf("[%4d]       ", $outer_line++)/emg;
-     print qq^<pre style="color: #999">$numbered_postamble</pre>\n\n^;
+     print pretty_print_code($preamble, $contents, $postamble);
      return 0;
   }
+  eval "\$${pkg}::Mungo_preamble = \$preamble;";
+  eval "\$${pkg}::Mungo_postamble = \$postamble;";
+  eval "\$${pkg}::Mungo_contents = \$contents;";
   return 1;
 }
 
