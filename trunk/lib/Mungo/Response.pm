@@ -10,6 +10,7 @@ use IO::Handle;
 use Mungo::Arbiter::Response;
 use Mungo::Response::Trap;
 use Mungo::Cookie;
+use HTML::Entities;
 our $AUTOLOAD;
 
 my $one_true_buffer = '';
