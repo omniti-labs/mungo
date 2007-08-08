@@ -28,6 +28,15 @@ $DEFAULT_POST_MAX_SIZE = 0;             # unlimited post size
 $DEFAULT_POST_MAX_PART = 0;             # and part size
 $DEFAULT_POST_MAX_IN_MEMORY = 1024*128; # 128k
 
+sub MungoDie {
+  my $i = 0;
+  my @callstack;
+  while(my @callinfo = caller($i++)) {
+    push @callstack, \@callinfo;
+  }
+  die { error => shift, callstack => \@callstack };
+}
+
 sub new {
   my ($class, $r) = @_;
   my $self = $r->pnotes(__PACKAGE__);
@@ -118,32 +127,30 @@ sub include_file {
   }
   my %copy = %$self;
   my $page = bless \%copy, $pkg;
-  eval { $page->content(@_); };
-  if($@) {
-    my $error = $@;
-    my $preamble = eval "\$${pkg}::Mungo_preamble;";
-    my $postamble = eval "\$${pkg}::Mungo_postamble;";
-    my $contents = eval "\$${pkg}::Mungo_contents;";
-    my ($line) = ($error =~ /line (\d+)/m);
-    die "$error\n\n".pretty_print_code($preamble, $contents, $postamble, $line);
-  }
+  $page->content(@_);
 }
 sub pretty_print_code {
   my ($preamble, $contents, $postamble, $line) = @_;
   my $outer_line = 1;
   my $inner_line = 1;
   my $rv = '';
-  (my $numbered_preamble = $preamble) =~
-    s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
-  $rv .= qq^<pre style="color: #999">$numbered_preamble</pre>\n^;
+  my $numbered_preamble = '';
+  if(defined($preamble)) {
+    ($numbered_preamble = $preamble) =~
+      s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
+    $rv .= qq^<pre style="color: #999">$numbered_preamble</pre>\n^;
+  }
   (my $numbered_contents = $$contents) =~
     s/^/sprintf("[%s%4d] %4d: ", ($outer_line == $line)?'*':' ',
                 $outer_line++, $inner_line++)/emg;
   $numbered_contents = HTML::Entities::encode($numbered_contents);
   $rv .= "<pre>$numbered_contents</pre>\n";
-  (my $numbered_postamble = $postamble) =~
-    s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
-  $rv .= qq^<pre style="color: #999">$numbered_postamble</pre>\n\n^;
+  my $numbered_postamble;
+  if(defined($postamble)) {
+    ($numbered_postamble = $postamble) =~
+      s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
+    $rv .= qq^<pre style="color: #999">$numbered_postamble</pre>\n\n^;
+  }
   return $rv;
 }
 sub packagize {
@@ -172,16 +179,32 @@ sub packagize {
     }
     1;
     ^;
-  eval $preamble . $expr . $postamble;
-  if($@) {
-     print "ERROR:<br><pre>$@</pre>\n\n";
-     print "PRE PARSE:<br>\n";
-     print pretty_print_code($preamble, $contents, $postamble);
-     return 0;
-  }
+
+  # Set these before we attempt to compile so that if there is an error,
+  # we can get access to the code from somewhere else.
   eval "\$${pkg}::Mungo_preamble = \$preamble;";
   eval "\$${pkg}::Mungo_postamble = \$postamble;";
   eval "\$${pkg}::Mungo_contents = \$contents;";
+
+  eval $preamble . $expr . $postamble;
+  if($@) {
+    my $error = $@;
+    if(ref $error ne 'HASH') {
+      my $i = 0;
+      my @callstack;
+      while(my @callinfo = caller($i++)) {
+        push @callstack, \@callinfo;
+      }
+      $error = { error => $error, callstack => \@callstack };
+    }
+    my ($line) = ($error->{error} =~ /line (\d+)/m);
+    unshift @{$error->{callstack}},
+      [
+        $pkg, '(ASP include)', $line
+      ];
+    local $SIG{__DIE__} = undef;
+    die $error;
+  }
   return 1;
 }
 
@@ -195,6 +218,7 @@ sub handler($$) {
   $main::Request = $self->Request();
   $main::Response = $self->Response();
   $main::Server = $self->Server();
+  local $SIG{__DIE__} = \&Mungo::MungoDie;
   eval {
     $self->Response()->Include($r->filename);
   };
