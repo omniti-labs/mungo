@@ -148,7 +148,9 @@ sub Include {
       }
 
       if($contents) {
-        print Mungo::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
+        if($self->{'Apache::Request'}->dir_config('Debug')) {
+          print Mungo::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
+        }
       } else {
         print '<pre>'.Dumper($@).'</pre>';
       }

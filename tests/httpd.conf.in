@@ -16,6 +16,7 @@ DirectoryIndex index.asp
 </Directory>
 <FilesMatch "\.asp$">
   PerlSetVar StatINC 1
+  PerlSetVar Debug 1
   SetHandler perl-script
   PerlHandler Mungo
 </FilesMatch>
