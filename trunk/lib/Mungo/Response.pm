@@ -5,7 +5,6 @@ package Mungo::Response;
 #   https://labs.omniti.com/zetaback/trunk/LICENSE
 
 use strict;
-use Carp;
 use IO::Handle;
 use Mungo::Arbiter::Response;
 use Mungo::Response::Trap;
@@ -129,8 +128,35 @@ sub Include {
     }
   };
   if($@) {
-    (my $error = HTML::Entities::encode(Carp::longmess())) =~ s/\n/<br \/>/gsm;
-    print "Error in Include($subject):<br />$@\n\n".$error."\n\n";;
+    use Data::Dumper;
+    print "Error in Include($subject):<br />\n";
+    my $href = $@;
+    eval {
+      my $pkg = $href->{callstack}->[0]->[0];
+      my $preamble = eval "\$${pkg}::Mungo_preamble;";
+      my $postamble = eval "\$${pkg}::Mungo_postamble;";
+      my $contents = eval "\$${pkg}::Mungo_contents;";
+      print "<pre class=\"error\">$href->{error}</pre><br />\n";
+
+      unless($contents) {
+        my $filename = $href->{callstack}->[0]->[1];
+        if(open(FILE, "<$filename")) {
+          local $/ = undef;
+          $$contents = <FILE>;
+          close(FILE);
+        }
+      }
+
+      if($contents) {
+        print Mungo::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
+      } else {
+        print '<pre>'.Dumper($@).'</pre>';
+      }
+    };
+    if($@) {
+      # Oh, dear lord this is bad.  We'd died trying to print out death.
+      print '<pre>'.Dumper($@).'</pre>';
+    }
     return undef;
   }
   return $rv;
