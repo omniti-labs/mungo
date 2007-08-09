@@ -9,6 +9,7 @@ use IO::Handle;
 use Mungo::Arbiter::Response;
 use Mungo::Response::Trap;
 use Mungo::Cookie;
+use Mungo::Utils;
 use HTML::Entities;
 our $AUTOLOAD;
 
@@ -149,7 +150,7 @@ sub Include {
 
       if($contents) {
         if($self->{'Apache::Request'}->dir_config('Debug')) {
-          print Mungo::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
+          print Mungo::Utils::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
         }
       } else {
         print '<pre>'.Dumper($@).'</pre>';

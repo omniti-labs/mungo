@@ -13,6 +13,7 @@ use Data::Dumper;
 use Digest::MD5 qw/md5_hex/;
 use Mungo::Request;
 use Mungo::Response;
+use Mungo::Error;
 use HTML::Entities;
 
 use vars qw/$VERSION
@@ -34,7 +35,7 @@ sub MungoDie {
   while(my @callinfo = caller($i++)) {
     push @callstack, \@callinfo;
   }
-  die { error => shift, callstack => \@callstack };
+  die Mungo::Error->new({ error => shift, callstack => \@callstack });
 }
 
 sub new {
@@ -128,30 +129,6 @@ sub include_file {
   my %copy = %$self;
   my $page = bless \%copy, $pkg;
   $page->content(@_);
-}
-sub pretty_print_code {
-  my ($preamble, $contents, $postamble, $line) = @_;
-  my $outer_line = 1;
-  my $inner_line = 1;
-  my $rv = '';
-  my $numbered_preamble = '';
-  if(defined($preamble)) {
-    ($numbered_preamble = $preamble) =~
-      s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
-    $rv .= qq^<pre style="color: #999">$numbered_preamble</pre>\n^;
-  }
-  (my $numbered_contents = $$contents) =~
-    s/^/sprintf("[%s%4d] %4d: ", ($outer_line == $line)?'*':' ',
-                $outer_line++, $inner_line++)/emg;
-  $numbered_contents = HTML::Entities::encode($numbered_contents);
-  $rv .= "<pre>$numbered_contents</pre>\n";
-  my $numbered_postamble;
-  if(defined($postamble)) {
-    ($numbered_postamble = $postamble) =~
-      s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
-    $rv .= qq^<pre style="color: #999">$numbered_postamble</pre>\n\n^;
-  }
-  return $rv;
 }
 sub packagize {
   my $self = shift;
