@@ -31,4 +31,29 @@ sub str2time($;$) {
   die "st2time unimplemented, install HTTP::Date\n";
 }
 
+sub pretty_print_code {
+  my ($preamble, $contents, $postamble, $line) = @_;
+  my $outer_line = 1;
+  my $inner_line = 1;
+  my $rv = '';
+  my $numbered_preamble = '';
+  if(defined($preamble)) {
+    ($numbered_preamble = $preamble) =~
+      s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
+    $rv .= qq^<pre style="color: #999">$numbered_preamble</pre>\n^;
+  }
+  (my $numbered_contents = $$contents) =~
+    s/^/sprintf("[%s%4d] %4d: ", ($outer_line == $line)?'*':' ',
+                $outer_line++, $inner_line++)/emg;
+  $numbered_contents = HTML::Entities::encode($numbered_contents);
+  $rv .= "<pre>$numbered_contents</pre>\n";
+  my $numbered_postamble;
+  if(defined($postamble)) {
+    ($numbered_postamble = $postamble) =~
+      s/^/sprintf("[ %4d]       ", $outer_line++)/emg;
+    $rv .= qq^<pre style="color: #999">$numbered_postamble</pre>\n\n^;
+  }
+  return $rv;
+}
+
 1;
