@@ -24,6 +24,7 @@ sub new {
           $part->{handle} = IO::Scalar->new(\$part->{payload});
           delete $part->{payload};
         }
+        $part->{handle}->seek(0,0);
       }
       else {
         $self->{$part->{name}} = $part->{payload};
