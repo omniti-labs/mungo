@@ -68,6 +68,13 @@ sub URLEncode {
   return $s;
 }
 
+sub URLDecode {
+  my $self = shift;
+  my $s = shift;
+  $s =~ s/%([a-fA-F0-9]{2})/chr(hex($1))/eg;
+  return $s;
+}
+
 sub filename2packagename {
   my ($self, $filename) = @_;
   my $type = ref $self;
