@@ -67,7 +67,6 @@ sub URLEncode {
   $s =~ s/([^a-zA-Z0-9])/sprintf("%%%02x", ord($1))/eg;
   return $s;
 }
-
 sub URLDecode {
   my $self = shift;
   my $s = shift;
@@ -207,10 +206,10 @@ sub handler($$) {
     $self->Response()->Include($r->filename);
   };
   if($@) {
-    # If it isn't too late, make this an internal server error
-    eval { $self->Response()->{Status} = 500; };
     # print out the error to the logs
     print STDERR $@ if($@);
+    # If it isn't too late, make this an internal server error
+    eval { $self->Response()->{Status} = 500; };
   }
  MUNGO_HANDLER_FINISH:
   $self->Response()->finish();
