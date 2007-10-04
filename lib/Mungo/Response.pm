@@ -198,8 +198,7 @@ sub AUTOLOAD {
   my $self = shift;
   my $name = $AUTOLOAD;
   $name =~ s/.*://;   # strip fully-qualified portion
-  die __PACKAGE__." AUTOLOAD($name)" unless(ref $self);
-  return undef;
+  die __PACKAGE__." does not implement $name";
 }
 
 sub TIEHANDLE {

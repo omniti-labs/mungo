@@ -134,6 +134,7 @@ sub AUTOLOAD {
   die unless(ref $self);
   my $name = $AUTOLOAD;
   $name =~ s/.*://;   # strip fully-qualified portion
+  die __PACKAGE__." does not implement $name";
 }
 
 1;
