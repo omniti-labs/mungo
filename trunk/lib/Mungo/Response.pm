@@ -129,31 +129,13 @@ sub Include {
     }
   };
   if($@) {
-    use Data::Dumper;
-    print "Error in Include($subject):<br />\n";
     my $href = $@;
     eval {
-      my $pkg = $href->{callstack}->[0]->[0];
-      my $preamble = eval "\$${pkg}::Mungo_preamble;";
-      my $postamble = eval "\$${pkg}::Mungo_postamble;";
-      my $contents = eval "\$${pkg}::Mungo_contents;";
-      print "<pre class=\"error\">$href->{error}</pre><br />\n";
-
-      unless($contents) {
-        my $filename = $href->{callstack}->[0]->[1];
-        if(open(FILE, "<$filename")) {
-          local $/ = undef;
-          $$contents = <FILE>;
-          close(FILE);
-        }
+      if($self->{OnError}) {
+        $self->{OnError}->($self, $href, $subject);
       }
-
-      if($contents) {
-        if($self->{'Apache::Request'}->dir_config('Debug')) {
-          print Mungo::Utils::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
-        }
-      } else {
-        print '<pre>'.Dumper($@).'</pre>';
+      else {
+        $self->defaultErrorHandler($href, $subject);
       }
     };
     if($@) {
@@ -164,6 +146,37 @@ sub Include {
   }
   return $rv;
 }
+
+sub defaultErrorHandler {
+  use Data::Dumper;
+  my $self = shift;
+  my $href = shift; # Our Error
+  my $subject = shift;
+  print "Error in Include($subject):<br />\n";
+  my $pkg = $href->{callstack}->[0]->[0];
+  my $preamble = eval "\$${pkg}::Mungo_preamble;";
+  my $postamble = eval "\$${pkg}::Mungo_postamble;";
+  my $contents = eval "\$${pkg}::Mungo_contents;";
+  print "<pre class=\"error\">$href->{error}</pre><br />\n";
+
+  unless($contents) {
+    my $filename = $href->{callstack}->[0]->[1];
+    if(open(FILE, "<$filename")) {
+      local $/ = undef;
+      $$contents = <FILE>;
+      close(FILE);
+    }
+  }
+
+  if($contents) {
+    if($self->{'Apache::Request'}->dir_config('Debug')) {
+      print Mungo::Utils::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
+    }
+  } else {
+    print '<pre>'.Dumper($@).'</pre>';
+  }
+}
+
 sub TrapInclude {
   my $self = shift;
   my $output;

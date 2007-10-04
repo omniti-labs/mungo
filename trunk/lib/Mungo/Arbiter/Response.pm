@@ -75,6 +75,7 @@ my %__check_map = (
 
   'Method' => \&Mungo::Arbiter::__immutable,
   'TotalBytes' => \&__immutable,
+  'OnError' => \&Mungo::Arbiter::__coderef,
 );
 
 sub check_map {

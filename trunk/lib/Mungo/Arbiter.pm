@@ -9,6 +9,15 @@ sub __immutable {
   die "Mungo '$key' is immutable!\n";
   return 0;
 }
+sub __boolean {
+  my ($self, $key, $value) = @_;
+  return 1 if ($value =~ /^(?:0|1)$/);
+  return 0;
+}
+sub __coderef {
+  my ($self, $key, $value) = @_;
+  return (ref $value eq 'CODE') ? 1 : 0;
+}
 sub TIEHASH {
   my $class = shift;
   my $parent = shift;
