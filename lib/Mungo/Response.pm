@@ -129,6 +129,11 @@ sub Include {
     }
   };
   if($@) {
+    # If we have more than 1 item in the IO stack, we should just re-raise.
+    if (scalar(@{$self->{'IO_stack'}}) > 1) {
+      local $SIG{__DIE__} = undef;
+      die $@;
+    }
     my $href = $@;
     eval {
       if($self->{OnError}) {
@@ -140,7 +145,9 @@ sub Include {
     };
     if($@) {
       # Oh, dear lord this is bad.  We'd died trying to print out death.
-      print '<pre>'.Dumper($@).'</pre>';
+      print STDERR "Mungo::Response -> die in error renderer\n";
+      print STDERR $href;
+      print STDERR $@;
     }
     return undef;
   }
@@ -188,13 +195,26 @@ sub TrapInclude {
   };
   untie *{$handle} if tied *{$handle};
   select(pop @{$self->{'IO_stack'}});
-  die $@ if $@;
+  if($@) {
+    local $SIG{__DIE__} = undef;
+    die $@;
+  }
   return $output;
 }
+
 sub End {
-  shift->Flush();
-  eval { goto MUNGO_HANDLER_FINISH; };
+  my $self = shift;
+  while(scalar(@{$self->{'IO_stack'}}) > 1) {
+    my $oldfh = select(pop @{$self->{'IO_stack'}});
+    if(my $obj = tied *{$oldfh}) {
+      untie *{$oldfh};
+      print $$obj;
+    }
+  }
+  $self->Flush();
+  eval { goto  MUNGO_HANDLER_FINISH; };
 }
+
 sub Flush {
   my $self = shift;
   # Flush doesn't apply unless we're immediately above STDOUT
