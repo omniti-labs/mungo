@@ -8,7 +8,7 @@ use strict;
 use IO::File;
 use Apache;
 use Apache::Constants qw( OK NOT_FOUND );
-use MIME::Base64 qw/encode_base64/;
+use MIME::Base64 qw/encode_base64 decode_base64/;
 use Data::Dumper;
 use Digest::MD5 qw/md5_hex/;
 use Mungo::Request;
@@ -72,6 +72,23 @@ sub URLDecode {
   my $s = shift;
   $s =~ s/%([a-fA-F0-9]{2})/chr(hex($1))/eg;
   return $s;
+}
+sub demangle_name {
+  my $self = shift;
+  my $name = shift;
+  if($name =~ /Mungo::FilePage::([^:]+)::__content/) {
+    my $filename = decode_base64($1);
+    my $r = Apache->request();
+    if(UNIVERSAL::can($r, 'document_root')) {
+      my $base = $r->document_root();
+      $filename =~ s/^$base//;
+    }
+    $name = "Mungo::FilePage($filename)";
+  }
+  elsif($name =~ /Mungo::MemPage::([^:]+)::__content/) {
+    $name = 'Mungo::MemPage(ANON)';
+  }
+  return $name;
 }
 
 sub filename2packagename {
