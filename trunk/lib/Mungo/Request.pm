@@ -7,6 +7,7 @@ package Mungo::Request;
 use strict;
 use Mungo::Cookie;
 use Mungo::MultipartFormData;
+eval "use APR::Table;";
 our $AUTOLOAD;
 
 sub new {
@@ -20,8 +21,10 @@ sub new {
     'Method' => $r->method,
     'Mungo' => $parent,
   );
-  my $cl = $r->header_in('Content-Length');
-  my $ct = $r->header_in('Content-Type');
+  my $cl = $r->can('headers_in') ? $r->headers_in->get('Content-length') :
+                                   $r->header_in('Content-length');
+  my $ct = $r->can('headers_in') ? $r->headers_in->get('Content-Type') :
+                                   $r->header_in('Content-Type');
   if($r->method eq 'POST' && $cl) {
     $core_data{TotalBytes} = $cl;
     if($ct =~ /^multipart\/form-data             # multipart form data
@@ -62,7 +65,16 @@ sub Cookies {
 }
 sub QueryString {
   my $self = shift;
-  my %qs = $self->{'Mungo'}->{'Apache::Request'}->args;
+  my (@params) = $self->{'Mungo'}->{'Apache::Request'}->args;
+  my %qs;
+  if(@params == 1) {
+    # in mod_perl2 ->args is just a string
+    %qs = (map { (split /=/, $_, 2) } (split /&/, $params[0]));
+  }
+  else {
+    # mod_perl1 splits it up for us
+    %qs = @params;
+  }
   return exists($qs{$_[0]})?$qs{$_[0]}:undef if(@_);
   return %qs if wantarray;
   return \%qs;

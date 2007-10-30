@@ -6,8 +6,19 @@ package Mungo;
 
 use strict;
 use IO::File;
-use Apache;
-use Apache::Constants qw( OK NOT_FOUND );
+eval "
+  use Apache2::RequestRec;
+  use Apache2::RequestUtil;
+  use Apache2::Const qw ( OK NOT_FOUND );
+";
+if($@) {
+  print STDERR "mod_perl2 not found: $@";
+  eval "
+    use Apache;
+    use Apache::Constants qw( OK NOT_FOUND );
+  ";
+  die $@ if $@;
+}
 use MIME::Base64 qw/encode_base64 decode_base64/;
 use Data::Dumper;
 use Digest::MD5 qw/md5_hex/;
@@ -78,7 +89,7 @@ sub demangle_name {
   my $name = shift;
   if($name =~ /Mungo::FilePage::([^:]+)::__content/) {
     my $filename = decode_base64($1);
-    my $r = Apache->request();
+    my $r = $self->{'Apache::Request'};
     if(UNIVERSAL::can($r, 'document_root')) {
       my $base = $r->document_root();
       $filename =~ s/^$base//;
@@ -210,8 +221,12 @@ sub packagize {
 
 sub handler($$) {
   my ($self, $r) = @_;
+  if (ref $self eq 'Apache2::RequestRec') {
+    $r = $self;
+    $self = __PACKAGE__;
+  }
   # Short circuit if we can't fine the file.
-  return NOT_FOUND if(! -r $r->filename);
+  return NOT_FOUND() if(! -r $r->filename);
 
   $self = $self->new($r) unless(ref $self);
   $self->Response()->start();

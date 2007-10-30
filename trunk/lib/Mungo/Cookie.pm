@@ -6,6 +6,7 @@ package Mungo::Cookie;
 
 use strict;
 use Mungo::Utils;
+eval "use APR::Table;";
 
 my %reserved = (
   'Expires' => 1,
@@ -27,9 +28,11 @@ my %time_multiplier = (
 sub new {
   my $class = shift;
   my $arg = shift;
-  my $cstr =  (ref $arg && UNIVERSAL::can($arg, 'header_in')) ? # pull from
-                $arg->header_in('Cookie') :         # Apache::Request
-                $arg;                               # or a passed string
+  my $cstr =  (ref $arg && UNIVERSAL::can($arg, 'headers_in')) ? # pull from
+                $arg->headers_in->get('Cookie') :      # Apache2::RequestRec
+                (ref $arg && UNIVERSAL::can($arg, 'header_in')) ?
+                  $arg->header_in('Cookie') :          # Apache::Request
+                  $arg;                                # or a passed string
   my $self = bless {}, $class;
   foreach my $cookie (split /;\s*/, $cstr) {        # ; seperated cookies
     my ($cname, $rest) = split /=/, $cookie, 2;     # cookie=OPAQUE_STRING
@@ -98,11 +101,15 @@ sub inject_headers {
     $r = $Response->{'Apache::Request'};
   }
   die __PACKAGE__ .
-    "->inject_header requires Apache::Request or Mungo::Response"
-      if(!$r || !UNIVERSAL::can($r, 'header_out'));
+    "->inject_header requires Apache2::RequestRec or Apache::Request or Mungo::Response"
+      if(!$r || (!UNIVERSAL::can($r, 'headers_out') &&
+                 !UNIVERSAL::can($r, 'header_out')));
   # $r is our Apache::Request at this point
   while(my ($cname, $info) = each %$self) {
-    $r->header_out('Set-Cookie', $self->make_cookie_string($cname, $info));
+    my $cookiestr = $self->make_cookie_string($cname, $info);
+    $r->can('headers_out') ?
+      $r->headers_out->add('Set-Cookie', $cookiestr) :
+      $r->header_out('Set-Cookie', $cookiestr);
   }
   return;
 }

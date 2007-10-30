@@ -20,6 +20,5 @@ use Data::Dumper;
 print Dumper($qs_href);
 print Dumper(%qs_hash);
 
-print "a=".$Request->QueryString('a')."\n";
 %>
 </pre>
