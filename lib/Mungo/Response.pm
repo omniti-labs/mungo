@@ -68,11 +68,18 @@ sub send_http_header {
     $r->no_cache(1);
   }
   else {
-    $r->header_out('Cache-Control', $self->{CacheControl});
+    if($r->can('headers_out')) {
+      $r->headers_out->set('Cache-Control' => $self->{CacheControl});
+    }
+    else {
+      $r->header_out('Cache-Control' => $self->{CacheControl});
+    }
   }
   $self->{Cookies}->inject_headers($r);
   $r->status($self->{Status});
-  $r->send_http_header($self->{ContentType});
+  $r->can('send_http_header') ?
+    $r->send_http_header($self->{ContentType}) :
+    $r->content_type($self->{ContentType});;
 }
 
 sub start {
@@ -99,7 +106,7 @@ sub AddHeader {
   my $self = shift;
   my $r = $self->{'Apache::Request'};
   die "Headers already sent." if($self->{'__HEADERS_SENT__'});
-  $r->header_out(@_);
+  $r->can('headers_out') ? $r->headers_out->set(@_) : $r->header_out(@_);
 }
 sub Cookies {
   my $self = shift;
@@ -112,7 +119,9 @@ sub Redirect {
   my $url = shift;
   die "Cannot redirect, headers already sent\n" if($self->{'__HEADERS_SENT__'});
   $self->{Status} = shift || 302;
-  $self->{'Apache::Request'}->header_out('Location', $url);
+  my $r = $self->{'Apache::Request'};
+  $r->can('headers_out') ? $r->headers_out->set('Location', $url) :
+                           $r->header_out('Location', $url);
   $self->send_http_header();
   $self->End();
 }

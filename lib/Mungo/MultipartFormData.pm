@@ -8,6 +8,7 @@ use strict;
 use IO::Scalar;
 use Mungo;
 use Mungo::Request;
+eval "use Apache2::RequestIO;";
 
 sub new {
   my $class = shift;
@@ -20,11 +21,11 @@ sub new {
       if($part->{filename}) {
         $self->{$part->{name}} = $part;
         # Make this payload into an IO::Scalar
-        if($part->{payload}) {
+        if(exists($part->{payload})) {
           $part->{handle} = IO::Scalar->new(\$part->{payload});
           delete $part->{payload};
         }
-        $part->{handle}->seek(0,0);
+        $part->{handle}->seek(0,0) if(UNIVERSAL::can($part->{handle}, 'seek'));
       }
       else {
         $self->{$part->{name}} = $part->{payload};

@@ -13,6 +13,16 @@ Notes about the file: <input type=text name=note><br>
 <%
   use Data::Dumper;
   print Dumper($a = $Request->Form());
+
+  my $up1 = $Request->Form('upfile1');
+  if($up1) {
+    my $fh = $up1->{handle};
+    my $length = 0;
+    while(<$fh>) {
+      $length += length($_);
+    }
+    print "Length of upfile1: $length\n";
+  }
 %>
 </pre>
 </body>
