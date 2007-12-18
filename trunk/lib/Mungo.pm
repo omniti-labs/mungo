@@ -84,6 +84,16 @@ sub URLDecode {
   $s =~ s/%([a-fA-F0-9]{2})/chr(hex($1))/eg;
   return $s;
 }
+sub HTMLEncode {
+  my $self = shift;
+  my $s = shift;
+  return HTML::Entities::encode_entities( $s );
+}
+sub HTMLDecode {
+  my $self = shift;
+  my $s = shift;
+  return HTML::Entities::decode_entities( $s );
+}
 sub demangle_name {
   my $self = shift;
   my $name = shift;
