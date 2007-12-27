@@ -5,7 +5,6 @@ package Mungo::MultipartFormData;
 #   https://labs.omniti.com/zetaback/trunk/LICENSE
 
 use strict;
-use IO::Scalar;
 use Mungo;
 use Mungo::Request;
 eval "use Apache2::RequestIO;";
@@ -20,9 +19,8 @@ sub new {
     if($part->{name}) {
       if($part->{filename}) {
         $self->{$part->{name}} = $part;
-        # Make this payload into an IO::Scalar
         if(exists($part->{payload})) {
-          $part->{handle} = IO::Scalar->new(\$part->{payload});
+          open($part->{handle}, "<", \$part->{payload});
           delete $part->{payload};
         }
         $part->{handle}->seek(0,0) if(UNIVERSAL::can($part->{handle}, 'seek'));
