@@ -69,7 +69,7 @@ sub QueryString {
   my %qs;
   if(@params == 1) {
     # in mod_perl2 ->args is just a string
-    %qs = map { s/\+/ /g; s/%([0-9a-f]{2})/chr(hex($1))/ige; }
+    %qs = map { s/\+/ /g; s/%([0-9a-f]{2})/chr(hex($1))/ige; $_ }
               (map { (split /=/, $_, 2) } (split /&/, $params[0]));
   }
   else {
