@@ -23,7 +23,7 @@ sub new {
           open($part->{handle}, "<", \$part->{payload});
           delete $part->{payload};
         }
-        $part->{handle}->seek(0,0) if(UNIVERSAL::can($part->{handle}, 'seek'));
+        eval { $part->{handle}->seek(0,0); };
       }
       else {
         $self->{$part->{name}} = $part->{payload};
