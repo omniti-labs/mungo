@@ -7,8 +7,11 @@ package Mungo::MultipartFormData;
 use strict;
 use Mungo;
 use Mungo::Request;
+use File::Temp;
+use IO::File;
 eval "use Apache2::RequestIO;";
 
+package Mungo::MultipartFormData;
 sub new {
   my $class = shift;
   my $self = bless {}, $class;
@@ -23,7 +26,7 @@ sub new {
           open($part->{handle}, "<", \$part->{payload});
           delete $part->{payload};
         }
-        eval { $part->{handle}->seek(0,0); };
+        $part->{handle}->seek(0,0) if(UNIVERSAL::can($part->{handle}, 'seek'));
       }
       else {
         $self->{$part->{name}} = $part->{payload};
@@ -127,13 +130,15 @@ sub append {
     $self->extract_headers();
     if(length($self->{payload}) > $self->{maxmem}) {
       my($fh, $file) = tmpnam();
-      if(!$fh) {
+      my $seekable = IO::File->new($file, "r+") if($fh);
+      if(!$seekable) {
         print STDERR "Could not create tmpfile (for POST storage)\n";
         return undef;
       }
+      $fh->close();
       unlink($file);
-      $self->{handle} = $fh;
-      $self->{handle}->print($self->{payload});
+      $self->{handle} = $seekable;
+      $self->{handle}->print($self->{payload}) || die "cannot write to tmpfile";
       delete $self->{payload};
     }
   }
