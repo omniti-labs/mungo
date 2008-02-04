@@ -139,6 +139,11 @@ sub ServerVariables {
   elsif($var eq 'HTTP_HOST') {
     return $self->{'Mungo'}->{'Apache::Request'}->hostname;
   }
+  elsif( ($var eq 'REFERER') || ($var eq 'REFERRER') ) {
+    my $r = $self->{'Mungo'}->{'Apache::Request'};
+    return $r->can('headers_in') ? $r->headers_in->get('Referer') :
+                                   $r->header_in('Referer');
+  }
   return undef;
 }
 
