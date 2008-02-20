@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+  "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
+[
+  <!ENTITY % magic.fixup SYSTEM "http://labs.omniti.com/docbook/ent">
+  %magic.fixup;
+]>
+<book id="skel" lang="en">
+  <bookinfo>
+    <title>Mungo</title>
+    <subtitle>The anti-framework for perl on the web.</subtitle>
+    <!-- <edition>edition</edition> -->
+    <pubdate>@PUBDATE@, Document revision @VERS@</pubdate>
+
+    <corpauthor>OmniTI Computer Consulting, Inc.</corpauthor>
+
+    <copyright>
+      <year>2007, 2008</year>
+      <holder>OmniTI Computer Consulting, Inc.</holder>
+    </copyright>
+
+<!--
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="somelogo.jpg"/>
+      </imageobject>
+    </mediaobject>
+-->
+
+  </bookinfo>
+
+<!--
+  <preface id="preface">
+    <title>Preface</title>
+    <para>
+      This is a preface.
+    </para>
+  </preface>
+-->
+
+<!--
+  <part id="p.guide">
+    <title>Configuration Guide</title>
+    &install;
+  </part>
+  &faq;
+  &disclaimer;
+  &copyright.all;
+-->
+  <reference id="ref">
+    <title>Reference</title>
+    &gen.all;
+  </reference>
+
+  <index id="the.index"/>
+</book>
+<!--
+vim:ts=2:sw=2:et:
+-->
