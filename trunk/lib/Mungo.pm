@@ -1,8 +1,159 @@
 package Mungo;
 
-# Copyright (c) 2007 OmniTI Computer Consulting, Inc. All rights reserved.
-# For information on licensing see:
-#   https://labs.omniti.com/mungo/trunk/LICENSE
+=head1 NAME
+
+Mungo - An Apache::ASP inspired lightweight ASP framework
+
+=head1 SYNOPSIS
+
+ # In your httpd.conf:
+ <FilesMatch "\.asp$">
+   SetHandler perl-script
+   PerlHandler Mungo
+ </FilesMatch>
+
+ # In asp pages:
+ <html>
+   <%= 1 + 1; %><!-- Output: 2 -->
+   <% 1 + 1; %><!-- No Output  -->
+
+   <!-- Variable scope extends across tags -->
+   <% my $pet = 'pony'; %>
+   <%= $pet %><!-- you get a pony! -->
+
+   <!-- Can embed control structures into pages -->
+   <% if ($prefer_daisies) { %>
+     <h2>Here are your daisies!</h2>
+   <% } else { %>
+     <h2>Brown-Eyed Susans, Just For You!</h2>
+   <% } %>
+
+   <!-- For, foreach, while loops, too -->
+   <% foreach my $beer_num (0..99) { %>
+     <p><%= 99 - $beer_num %> bottles of beer on the wall</p>
+   <% } %>
+
+   <%
+      # Write arbitrary amounts of Perl here
+
+      # you can use modules
+      # (just don't define subroutines or change packages)
+      use Some::Module;
+
+      # Access info about the request
+      # TODO - DOCS
+      # $Request->
+
+      # Access info about the server
+      # TODO - DOCS
+      # $Server->
+
+
+      # Redirect to somewhere else...
+      if ($want_to_redirect) {
+         $Response->Redirect($url);
+         # Never reach here
+      }
+
+      # Abort further processing and close outout stream
+      if ($want_to_end) {
+         $Response->End;
+         # Never reach here
+      }
+   %>
+
+   <!-- Can also include other pages or fragments -->
+   <% $Response->Include($filesystem_path); %>
+
+   <!-- may also include args -->
+   <% $Response->Include($filesystem_path, @args); %>
+
+   <!-- If args are passed to an ASP page (or page fragment) access them via @_ -->
+   <%
+     # In included file
+     my $arg1 = shift;
+   %>
+
+   <!-- What if you want to grab that output instead of sending to the browser? -->
+   <% my $output = $Response->TrapInclude($filesystem_path, @args); %>
+
+   <!-- You can also send a string of ASP code instead of using a file -->
+   <%
+     # Use a scalar reference!
+     $Response->Include(\$asp, @args);
+   %>
+
+ </html>
+
+
+=head1 DESCRIPTION
+
+=head2 What is Mungo?
+
+Mungo is a mod_perl 1 or 2 PerlHandler module.  It allows you to 
+embed Perl code directly into HTML files, using <% %> tags.
+
+Mungo also provides Request and Response objects, similar to many ASP 
+environments.  These facilities are aimed at applications needing simple, 
+lightweight features.
+
+=head2 What Mungo does:
+
+=over 4
+
+=item *
+
+Allows perl to be embedded in web pages with <% %> tags.
+
+=item *
+
+Provides simplistic access to various aspects of the client request via a Mungo::Request object.
+
+=item *
+
+Provides simplistic manipulation of the response via a Mungo::Response object.
+
+=item *
+
+Handles query strings, post forms (urlencoded and multipart) as well as cookies. 
+
+=back
+
+=head2 What Mungo does not do:
+
+=over 4
+
+=item *
+
+Manage sessions
+
+=item *
+
+XML/XSLT/etc
+
+=back
+
+=head2 Implementation Goals
+
+Mungo was originally developed as a simpler, non-GPL'd Apache::ASP with far 
+fewer CPAN dependencies.  It is somewhat compatible with Apache::ASP, but 
+there are enough differences to warrant close attention to the docs here.
+
+While Mungo is very simple and has a very small fetureset, the object APIs it 
+does implement adhere closely to those present in Apache::ASP. So, assuming you
+are not using sessions or the XML features, you should find few obstacles
+in making your application run under Mungo (it could be as simple as
+setting PerlHandler Mungo in your httpd.conf file).
+
+=cut
+
+
+#=============================================================================#
+#                           Implementation Notes
+#=============================================================================#
+# - public methods are CamelCase
+# 
+#=============================================================================#
 
 use strict;
 use IO::File;
@@ -40,6 +191,57 @@ $DEFAULT_POST_MAX_SIZE = 0;             # unlimited post size
 $DEFAULT_POST_MAX_PART = 0;             # and part size
 $DEFAULT_POST_MAX_IN_MEMORY = 1024*128; # 128k
 
+=head1 MODPERL HANDLER
+
+  PerlHandler Mungo
+
+When Mungo is the registered handler for a URL, it first locates the file (if
+not found, apache's 404 response mechanism is triggered).  Global objects
+describing the transaction are created: $Request, $Server, and $Response 
+(see Mungo::Response, etc. for details) Next, the file is parsed and 
+evaluated, and the results are sent to the browser. This happens using $Request->Include().
+
+=cut
+
+sub handler($$) {
+  my ($self, $r) = @_;
+  if (ref $self eq 'Apache2::RequestRec') {
+    $r = $self;
+    $self = __PACKAGE__;
+  }
+  # Short circuit if we can't find the file.
+  return NOT_FOUND() if(! -r $r->filename);
+
+  $self = $self->new($r) unless(ref $self);
+  $self->Response()->start();
+  $main::Request = $self->Request();
+  $main::Response = $self->Response();
+  $main::Server = $self->Server();
+  local $SIG{__DIE__} = \&Mungo::MungoDie;
+  eval {
+    $self->Response()->Include($r->filename);
+  };
+  if($@) {
+    # print out the error to the logs
+    print STDERR $@ if($@);
+    # If it isn't too late, make this an internal server error
+    eval { $self->Response()->{Status} = 500; };
+  }
+
+  # gotos come here from:
+  #   $Response->End()
+ MUNGO_HANDLER_FINISH:
+  $self->Response()->finish();
+
+  $self->cleanse();
+  undef $main::Request;
+  undef $main::Response;
+  undef $main::Server;
+  undef $self;
+  return &OK;
+}
+
+
 sub MungoDie {
   my $i = 0;
   my @callstack;
@@ -48,6 +250,17 @@ sub MungoDie {
   }
   die Mungo::Error->new({ error => shift, callstack => \@callstack });
 }
+
+=for private_developer_docs
+
+=head2 $mungo = Mungo->new($req);
+
+Given an Apache2::RequestRec or Apache request object,
+return the Mungo context, which is a Singleton.
+
+Called from the modperl handler.
+
+=cut
 
 sub new {
   my ($class, $r) = @_;
@@ -59,7 +272,17 @@ sub new {
   $r->pnotes(__PACKAGE__, $self);
   return $self;
 }
+
 sub DESTROY { }
+
+=for private_developer_docs
+
+=head2 $mungo->cleanse();
+
+Releases resources at the end of a request.
+
+=cut
+
 sub cleanse {
   my $self = shift;
   $self->Response()->cleanse();
@@ -126,6 +349,10 @@ sub contents2packagename {
   $type =~ s/::(?:File|Mem)Page::[^:]+$//;
   return $type . "::MemPage::" . md5_hex($$contents);
 }
+
+
+# $output = $mungo->include_mem( 
+#
 sub include_mem {
   my $self = shift;
   my $contents = shift;
@@ -229,41 +456,6 @@ sub packagize {
   return 1;
 }
 
-sub handler($$) {
-  my ($self, $r) = @_;
-  if (ref $self eq 'Apache2::RequestRec') {
-    $r = $self;
-    $self = __PACKAGE__;
-  }
-  # Short circuit if we can't fine the file.
-  return NOT_FOUND() if(! -r $r->filename);
-
-  $self = $self->new($r) unless(ref $self);
-  $self->Response()->start();
-  $main::Request = $self->Request();
-  $main::Response = $self->Response();
-  $main::Server = $self->Server();
-  local $SIG{__DIE__} = \&Mungo::MungoDie;
-  eval {
-    $self->Response()->Include($r->filename);
-  };
-  if($@) {
-    # print out the error to the logs
-    print STDERR $@ if($@);
-    # If it isn't too late, make this an internal server error
-    eval { $self->Response()->{Status} = 500; };
-  }
- MUNGO_HANDLER_FINISH:
-  $self->Response()->finish();
-
-  $self->cleanse();
-  undef $main::Request;
-  undef $main::Response;
-  undef $main::Server;
- 
-  undef $self; 
-  return &OK;
-}
 
 sub convertStringToExpression {
   my $string_ref = shift;
@@ -290,5 +482,39 @@ sub convertStringToExpression {
               /sexg;
   return $string;
 }
+
+=head1 LIMITATIONS/BUGS
+
+=over 4
+
+=item *
+
+Cannot define subroutines in ASP pages.  Bad things will happen.
+
+=item *
+
+Documentation is spotty.  This is being worked on.
+
+=back
+
+=head1 LICENSE INFORMATION
+
+Copyright (c) 2007 OmniTI Computer Consulting, Inc. All rights reserved.
+For information on licensing see:
+
+https://labs.omniti.com/mungo/trunk/LICENSE
+
+=head1 PROJECT WEBSITE
+
+https://labs.omniti.com/trac/mungo/
+
+=head1 AUTHOR
+
+Theo Schlossnagle (code)
+
+Clinton Wolfe (docs)
+
+=cut
+
 
 1;

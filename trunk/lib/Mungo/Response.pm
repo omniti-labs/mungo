@@ -125,6 +125,20 @@ sub Redirect {
   $self->send_http_header();
   $self->End();
 }
+
+
+=head2 $res->Include($filename, $arg1, $arg2, ...);
+
+=head2 $res->Include(\$string, $arg1, $arg2, ...);
+
+Reads the given filename or string and interprets it as Mungo ASP code.
+
+Any passed arguments are available in the @_ array within the ASP code.
+
+The results of evaluating the code is printed to STDOUT.
+
+=cut
+
 sub Include {
   my $self = shift;
   my $subject = shift;
@@ -221,7 +235,7 @@ sub End {
     }
   }
   $self->Flush();
-  eval { goto  MUNGO_HANDLER_FINISH; };
+  eval { goto  MUNGO_HANDLER_FINISH; }; # Jump back to Mungo::handler()
 }
 
 sub Flush {
