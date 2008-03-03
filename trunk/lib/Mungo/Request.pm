@@ -34,7 +34,7 @@ sub new {
       $core_data{multipart_form} =
         Mungo::MultipartFormData->new($r, $cl, $boundary);
     }
-    elsif($ct eq 'application/x-www-form-urlencoded') {
+    elsif($ct =~ /^application\/x-www-form-urlencoded\s*(?:;.*)?/) {
       $r->read($core_data{'form_content'}, $core_data{TotalBytes});
     }
   }
