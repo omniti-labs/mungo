@@ -10,6 +10,43 @@ use Mungo::MultipartFormData;
 eval "use APR::Table;";
 our $AUTOLOAD;
 
+=head1 NAME
+
+Mungo::Request - represent an HTTP request context
+
+=head1 SYNOPSIS
+
+  <!-- Within your HTML, you get a Request object for free -->
+  <% if (defined $Request) { ... } %>
+
+  <!-- Get params -->
+  <%
+     my $value = $Request->Params('param_name');
+     my %params = $Request->Params();
+  %>
+
+  <!-- Get cookies -->
+  <%
+     # for single-valued cookies
+     my $value = $Request->Cookies($cookie_name);
+
+     # for multi-valued cookies
+     my $hashref = $Request->Cookies($cookie_name);
+
+     # for multi-valued cookies
+     my $value = $Request->Cookies($cookie_name, $key);
+
+  %>
+
+=head1 DESCRIPTION
+
+Represents the request side of a Mungo request cycle.
+
+See Mungo, and Mungo::Request.
+
+=cut
+
+
 sub new {
   my $class = shift;
   my $parent = shift;
@@ -57,12 +94,45 @@ sub cleanse {
   untie %$self if tied %$self;
 }
 
+=head2 $value = $Request->Cookies($cookie_name);
+
+=head2 $hashref = $Request->Cookies($cookie_name);
+
+=head2 $value = $Request->Cookies($cookie_name, $key);
+
+Reads and parses incoming cookie data.  Behavior depends on whether 
+the cookie contained name-value pairs.
+
+If not, the first form simply returns the value set in the given cookie name, or undef.
+
+If name-value pairs are present, the second form returns a hashref of all the name-value pairs.
+
+If name-value pairs are present, the third form returns the value for the given key.
+
+If no such cookie with the given name exists, returns undef.
+
+=cut
+
 sub Cookies {
   my $self = shift;
-  my $ccls = 'Mungo::Cookie';
-  my $cookie = $self->{$ccls} ||= $ccls->new($self->{'Apache::Request'});
+  my $cookie_class = 'Mungo::Cookie';
+  my $cookie = $self->{$cookie_class} ||= $cookie_class->new($self->{'Apache::Request'});
   return $cookie->__get(@_);
 }
+
+=head2 $value = $Request->QueryString($name);
+
+=head2 %params = $Request->QueryString();
+
+=head2 $params_hashref = $Request->QueryString();
+
+Returns one value (first form) or all values (second and third forms)
+from the submitted query string.
+
+Params() is preferred.
+
+=cut
+
 sub QueryString {
   my $self = shift;
   my (@params) = $self->{'Mungo'}->{'Apache::Request'}->args;
@@ -80,6 +150,7 @@ sub QueryString {
   return %qs if wantarray;
   return \%qs;
 }
+
 sub decode_form {
   my $class = ref $_[0] ? ref $_[0] : $_[0];
   my $form_content = $_[1];
@@ -99,6 +170,20 @@ sub decode_form {
   }
   return $form;
 }
+
+=head2 $value = $Request->Form($name);
+
+=head2 %params = $Request->Form();
+
+=head2 $params_hashref = $Request->Form();
+
+Returns one value (first form) or all values (second and third forms)
+from the submitted POST data.
+
+Params() is preferred.
+
+=cut
+
 sub Form {
   my $self = shift;
   my $form;
@@ -118,6 +203,22 @@ sub Form {
   return $form;
 }
 
+=head2 $value = $Request->Params($name);
+
+=head2 %params = $Request->Params();
+
+=head2 $params_hashref = $Request->Params();
+
+Returns one value (first form) or all values (second and third forms)
+from the submitted CGI parameters, whether that was via the query string or via POST data.
+
+This method is recommended over Form and QueryString, because it is independent 
+of how the data was submitted.
+
+If both methods provide data, Form overrides QueryString.
+
+=cut
+
 sub Params {
   my $self = shift;
   return $self->Form($_[0]) || $self->QueryString($_[0]) if(@_);
@@ -129,6 +230,15 @@ sub Params {
   return %base if wantarray;
   return \%base;
 }
+
+=head2 $value = $Request->ServerVariables($variable_name);
+
+Returns information about the request or the server.  Only certain 
+variables are supported:
+
+  REFERER, REFERRER, DOCUMENT_ROOT, HTTP_HOST
+
+=cut
 
 sub ServerVariables {
   my $self = shift;
@@ -154,5 +264,14 @@ sub AUTOLOAD {
   $name =~ s/.*://;   # strip fully-qualified portion
   die __PACKAGE__." does not implement $name";
 }
+
+=head1 AUTHOR
+
+Theo Schlossnagle (code)
+
+Clinton Wolfe (docs)
+
+
+=cut
 
 1;
