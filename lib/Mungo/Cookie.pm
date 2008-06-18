@@ -4,6 +4,21 @@ package Mungo::Cookie;
 # For information on licensing see:
 #   https://labs.omniti.com/zetaback/trunk/LICENSE
 
+=head1 NAME
+
+Mungo::Cookie - Cookie support class
+
+=head1 SYNOPSIS
+
+  # Use via Mungo::Request->Cookies
+  my $value = $Request->cookies($cookie_name, $key_name);
+
+=head1 DESCRIPTION
+
+Represents one or more 
+
+=cut
+
 use strict;
 use Mungo::Utils;
 eval "use APR::Table;";
@@ -25,6 +40,14 @@ my %time_multiplier = (
   'y' => 31536000
 );
 
+# Private constructor.
+# $cookiejar = Mungo::Cookie->new($apache_req);
+# $cookiejar = Mungo::Cookie->new($raw_cookie_string);
+#   Splits the incoming cookie string on ; to find sub-cookies
+#  If subcookie has a single value (with no key):
+#   $self->{$subcookie_name}->{Value} = $value
+#  If subcookie has a key-value pairs:
+#   $self->{$subcookie_name}->{Value}->{$key} = $value;
 sub new {
   my $class = shift;
   my $arg = shift;
@@ -35,6 +58,9 @@ sub new {
                   $arg;                                # or a passed string
   my $self = bless {}, $class;
   foreach my $cookie (split /;\s*/, $cstr) {        # ; seperated cookies
+      # $cname = subcookie name
+      # @lk = list of key, value pairs in subcookie
+      # @kv = a key, value pair in a subcookie
     my ($cname, $rest) = split /=/, $cookie, 2;     # cookie=OPAQUE_STRING
     my @lk = ($rest !~ /[=&]/) ?                    # single value ?
                ($rest) :                            # then use that
@@ -93,6 +119,8 @@ sub make_cookie_string {
   }
   return $cstring;
 }
+
+
 sub inject_headers {
   my $self = shift;
   my $Response = shift;
@@ -114,27 +142,49 @@ sub inject_headers {
   return;
 }
 
+# Sigh.  "friend" method.
+
+# Why???
+# $cookie_object = $cookie_object->__get();
+
+# If $cookie_name is single-valued....
+#  $value = $cookie_object->__get($cookie_name);
+
+# If $cookie_name is multi-valued....
+#  $hashref = $cookie_object->__get($cookie_name);
+
+# If $cookie_name is multi-valued....
+#  $value = $cookie_object->__get($cookie_name, $key);
+
 sub __get {
   my $self = shift;
   # Short circuit if no args were given
   return $self unless(@_);
 
-  my $key = shift;
+  my $cookie_name = shift;
   if(@_) {
-    my $part = shift;
-    return (exists $self->{$key} && ref $self->{$key}->{Value} eq 'HASH' &&
-            exists $self->{$key}->{Value}->{$part}) ?
-             $self->{$key}->{Value}->{$part} :
+    my $key = shift;
+    return (exists $self->{$cookie_name} && ref $self->{$cookie_name}->{Value} eq 'HASH' &&
+            exists $self->{$cookie_name}->{Value}->{$key}) ?
+             $self->{$cookie_name}->{Value}->{$key} :
              undef;
   }
-  return (exists $self->{$key}->{Value}) ? $self->{$key}->{Value} : undef;
+  return (exists $self->{$cookie_name}->{Value}) ? $self->{$cookie_name}->{Value} : undef;
 }
+
+
+# $cookie->__set($cookie_name, $value);
+# $cookie->__set($cookie_name, $key, $value);
+# $cookie->__set($cookie_name, 'Expires', $value);
+# $cookie->__set($cookie_name, 'Path', $value);
+# $cookie->__set($cookie_name, 'Domain', $value);
+# $cookie->__set($cookie_name, 'Secure', $value);
 
 sub __set {
   my $self = shift;
   my $cname = shift;
-  my $key = undef;
   my $value = shift;
+  my $key = undef;
   if(@_) {
     $key = $value;
     $value = shift;

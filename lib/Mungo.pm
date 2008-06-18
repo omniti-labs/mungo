@@ -83,6 +83,17 @@ Mungo - An Apache::ASP inspired lightweight ASP framework
      $Response->Include(\$asp, @args);
    %>
 
+   <!-- Cookie facilities -->
+   <%
+     # Read cookie
+     $single_value = $Request->Cookies($cookie_name);
+     $hashref = $Request->Cookies($cookie_name);
+
+     # Set cookie
+     $Response->Cookies($cookie_name, $single_value);
+     $Response->Cookies($cookie_name, $hash_ref);
+   %>
+
  </html>
 
 
@@ -295,12 +306,29 @@ sub Server { return $_[0]; }
 sub Request { return Mungo::Request->new($_[0]); }
 sub Response { return Mungo::Response->new($_[0]); }
 
+=head2 $encoded = $mungo->URLEncode($string);
+
+=head2 $encoded = Mungo->URLEncode($string);
+
+Encodes a string to escape characters that are not permitted in a URL.
+
+=cut
+
 sub URLEncode {
   my $self = shift;
   my $s = shift;
   $s =~ s/([^a-zA-Z0-9])/sprintf("%%%02x", ord($1))/eg;
   return $s;
 }
+
+=head2 $string = $mungo->URLDecode($encoded);
+
+=head2 $string = Mungo->URLDecode($encoded);
+
+Decodes a string to unescape characters that are not permitted in a URL.
+
+=cut
+
 sub URLDecode {
   my $self = shift;
   my $s = shift;
@@ -317,6 +345,9 @@ sub HTMLDecode {
   my $s = shift;
   return HTML::Entities::decode_entities( $s );
 }
+
+
+# Private?
 sub demangle_name {
   my $self = shift;
   my $name = shift;
@@ -335,6 +366,7 @@ sub demangle_name {
   return $name;
 }
 
+# Private?
 sub filename2packagename {
   my ($self, $filename) = @_;
   my $type = ref $self;
@@ -367,6 +399,7 @@ sub include_mem {
   my $page = bless \%copy, $pkg;
   $page->content(@_);
 }
+# Private?
 sub include_file {
   my $self = shift;
   my $filename = shift;
@@ -401,6 +434,7 @@ sub include_file {
   my $page = bless \%copy, $pkg;
   $page->content(@_);
 }
+# Private?
 sub packagize {
   my $self = shift;
   my $pkg = shift;

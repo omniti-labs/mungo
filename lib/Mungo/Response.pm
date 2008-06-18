@@ -4,6 +4,63 @@ package Mungo::Response;
 # For information on licensing see:
 #   https://labs.omniti.com/zetaback/trunk/LICENSE
 
+=head1 NAME
+
+Mungo::Response - Represent response side of HTTP request cycle
+
+=head1 SYNOPSIS
+
+  <!-- You get a Response object for free when you use Mungo -->
+  <% if ($Response) { ... } %>
+
+  <!-- Read and Mungo-process other files -->
+  <%
+     # Prints to browser
+     $Response->Include('/some/file.html', $arg1);
+
+     # Caputured
+     my $output = $Response->TrapInclude('/some/file.html');
+
+     # Can also print to browser via Response
+     print $Response "Hello world!";
+  %>
+
+  <!-- May also set headers -->
+  <%
+     $Response->AddHeader('header_name' => $value);
+  %>
+
+  <!-- Halt processing and jump out of the handler -->
+  <%
+     # With a 302
+     $Response->Redirect('/new/url/');
+
+     # Just end
+     $Response->End();
+  %>
+
+  <!-- Cookie facility -->
+  <%
+     # Single valued cookies
+     $Response->Cookies($cookie_name, $cookie_value);
+
+     # Multivalued cookies
+     $Response->Cookies($cookie_name, $key, $value);
+
+     # Cookie options
+     $Response->Cookies($cookie_name, 'Domain', $value);
+     $Response->Cookies($cookie_name, 'Expires', $value);
+     $Response->Cookies($cookie_name, 'Path', $value);
+     $Response->Cookies($cookie_name, 'Secure', $value);
+  %>
+
+=head1 DESCRIPTION
+
+Represents the response side of the Mungo request cycle.
+
+=cut
+
+
 use strict;
 use IO::Handle;
 use Mungo::Arbiter::Response;
@@ -102,6 +159,14 @@ sub finish {
   die __PACKAGE__." IO stack of wrong depth" if(scalar(@{$self->{'IO_stack'}}) != 1);
 }
 
+=head2 $Response->AddHeader('header_name' => 'header_value');
+
+Adds an HTTP header to the response.
+
+Dies if headers (or any other output) has already been sent.
+
+=cut
+
 sub AddHeader {
   my $self = shift;
   my $r = $self->{'Apache::Request'};
@@ -114,6 +179,15 @@ sub Cookies {
   my $cookie = $self->{'Cookies'};
   $cookie->__set(@_);
 }
+
+=head2 $Response->Redirect($url);
+
+Issues a 302 redirect with the new location as $url.
+
+Dies if headers (or any other output) has already been sent.
+
+=cut
+
 sub Redirect {
   my $self = shift;
   my $url = shift;
@@ -207,6 +281,12 @@ sub defaultErrorHandler {
   }
 }
 
+=head2 $output = $Response->TrapInclude($filename, @args);
+
+Like Include(), but results are returned as a string, instead of being printed.
+
+=cut
+
 sub TrapInclude {
   my $self = shift;
   my $output;
@@ -224,6 +304,14 @@ sub TrapInclude {
   }
   return $output;
 }
+
+=head2 $Response->End()
+
+Stops processing the current response, shuts down the 
+output handle, and jumps out of the response handler.  
+No further processing will occur.
+
+=cut
 
 sub End {
   my $self = shift;
@@ -300,5 +388,13 @@ sub CLOSE {
   $self->{Buffer} = 0;
 }
 sub UNTIE { }
+
+=head1 AUTHOR
+
+Theo Schlossnagle
+
+Clinton Wolfe (docs)
+
+=cut
 
 1;
