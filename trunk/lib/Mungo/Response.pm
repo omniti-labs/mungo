@@ -218,6 +218,7 @@ sub Include {
   my $subject = shift;
   my $rv;
   eval {
+    local $SIG{__DIE__} = \&Mungo::MungoDie;
     if(ref $subject) {
       $rv = $self->{'Mungo'}->include_mem($subject, @_);
     }
@@ -227,23 +228,23 @@ sub Include {
   };
   if($@) {
     # If we have more than 1 item in the IO stack, we should just re-raise.
-    if (scalar(@{$self->{'IO_stack'}}) > 1) {
+    if (scalar(@{$self->{'IO_stack'} || []}) > 1) {
       local $SIG{__DIE__} = undef;
       die $@;
     }
-    my $href = $@;
+    my $hashref = $@;
     eval {
       if($self->{OnError}) {
-        $self->{OnError}->($self, $href, $subject);
+        $self->{OnError}->($self, $hashref, $subject);
       }
       else {
-        $self->defaultErrorHandler($href, $subject);
+        $self->defaultErrorHandler($hashref, $subject);
       }
     };
     if($@) {
       # Oh, dear lord this is bad.  We'd died trying to print out death.
       print STDERR "Mungo::Response -> die in error renderer\n";
-      print STDERR $href;
+      print STDERR $hashref;
       print STDERR $@;
     }
     return undef;
