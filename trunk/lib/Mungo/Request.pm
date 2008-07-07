@@ -25,6 +25,14 @@ Mungo::Request - represent an HTTP request context
      my %params = $Request->Params();
   %>
 
+  <!-- Get Request Info -->
+  <%
+     my $refer = $Request->ServerVariables('REFERER');
+     my $refer = $Request->ServerVariables('REFERRER'); # Same
+     my $server_hostname = $Request->ServerVariables('HTTP_HOST');
+     my $client_ip = $Request->ServerVariables('REMOTE_IP'); # If proxied, uses HTTP_X_FORWARDED_FOR.
+  %>
+
   <!-- Get cookies -->
   <%
      # for single-valued cookies
@@ -241,20 +249,35 @@ variables are supported:
 =cut
 
 sub ServerVariables {
-  my $self = shift;
-  my $var = shift;
-  if($var eq 'DOCUMENT_ROOT') {
-    return $self->{'Mungo'}->{'Apache::Request'}->document_root;
-  }
-  elsif($var eq 'HTTP_HOST') {
-    return $self->{'Mungo'}->{'Apache::Request'}->hostname;
-  }
-  elsif( ($var eq 'REFERER') || ($var eq 'REFERRER') ) {
-    my $r = $self->{'Mungo'}->{'Apache::Request'};
-    return $r->can('headers_in') ? $r->headers_in->get('Referer') :
-                                   $r->header_in('Referer');
-  }
-  return undef;
+    my $self = shift;
+    my $var = shift;
+    if ($var eq 'DOCUMENT_ROOT') {
+        return $self->{'Mungo'}->{'Apache::Request'}->document_root;
+    }
+    elsif($var eq 'HTTP_HOST') {
+        return $self->{'Mungo'}->{'Apache::Request'}->hostname;
+    }
+    elsif( ($var eq 'REFERER') || ($var eq 'REFERRER') ) {
+        my $r = $self->{'Mungo'}->{'Apache::Request'};
+        return $r->can('headers_in') ? $r->headers_in->get('Referer') :
+                                       $r->header_in('Referer');
+    }
+    elsif ($var eq 'REMOTE_IP') {
+        # May be proxied, and we assume our local IP is a private IP if so.
+        # So look for the first non-private IP among the possible IPs.
+        my @possible_ips = @ENV{qw(HTTP_X_X_FORWARDED_FOR HTTP_X_FORWARDED_FOR REMOTE_ADDR)};
+
+        # May be a comma-separareted list, so break down into individual IPs if so.
+        my @single_ips = map { split(/,\s*/, $_) } @possible_ips;
+
+        # Eliminate private network IPs, which we assume to be the backside of a proxy server
+        my @not_private_ips = grep { $_ && $_ !~ /^127\.0\.0\.1|^192\.168\.|^10\./ } @single_ips;
+
+        # Return the first remaining address
+        return $not_private_ips[0];
+
+    }
+    return undef;
 }
 
 sub AUTOLOAD {
