@@ -316,7 +316,7 @@ No further processing will occur.
 
 sub End {
   my $self = shift;
-  while(scalar(@{$self->{'IO_stack'}}) > 1) {
+  while(scalar(@{$self->{'IO_stack'} || []}) > 1) {
     my $oldfh = select(pop @{$self->{'IO_stack'}});
     if(my $obj = tied *{$oldfh}) {
       untie *{$oldfh};
@@ -330,7 +330,7 @@ sub End {
 sub Flush {
   my $self = shift;
   # Flush doesn't apply unless we're immediately above STDOUT
-  return if(scalar(@{$self->{'IO_stack'}}) > 1);
+  return if(scalar(@{$self->{'IO_stack'} || []}) > 1);
   unless($self->{'__OUTPUT_STARTED__'}) {
     $self->send_http_header;
     $self->{'__OUTPUT_STARTED__'} = 1;
@@ -354,7 +354,7 @@ sub TIEHANDLE {
 sub PRINT {
   my $self = shift;
   my $output = shift;
-  if(scalar(@{$self->{'IO_stack'}}) == 1) {
+  if(scalar(@{$self->{'IO_stack'} || []}) == 1) {
     # Buffering a just-in-time headers only applies if we
     # immediately above STDOUT
     if($self->{Buffer}) {
@@ -370,7 +370,7 @@ sub PRINT {
 }
 sub PRINTF {
   my $self = shift;
-  if(scalar(@{$self->{'IO_stack'}}) == 1) {
+  if(scalar(@{$self->{'IO_stack'} || []}) == 1) {
     # Buffering a just-in-time headers only applies if we
     # immediately above STDOUT
     if($self->{Buffer}) {
