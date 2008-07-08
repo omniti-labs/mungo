@@ -335,7 +335,12 @@ sub Flush {
     $self->send_http_header;
     $self->{'__OUTPUT_STARTED__'} = 1;
   }
-  $self->{'IO_stack'}->[-1]->print($one_true_buffer);
+  if (@{$self->{'IO_stack'} || []}) {
+      $self->{'IO_stack'}->[-1]->print($one_true_buffer);
+  } else {
+      print $one_true_buffer;
+  }
+
   $one_true_buffer = '';
 }
 
@@ -366,7 +371,11 @@ sub PRINT {
       $self->send_http_header;
     }
   }
-  $self->{'IO_stack'}->[-1]->print($output);
+  if (@{$self->{'IO_stack'} || []}) {
+      $self->{'IO_stack'}->[-1]->print($output);
+  } else {
+      print $output;
+  }
 }
 sub PRINTF {
   my $self = shift;
@@ -382,7 +391,11 @@ sub PRINTF {
       $self->send_http_header;
     }
   }
-  $self->{'IO_stack'}->[-1]->printf(@_);
+  if (@{$self->{'IO_stack'} || []}) {
+      $self->{'IO_stack'}->[-1]->printf(@_);
+  } else {
+      printf(@_);
+  }
 }
 sub CLOSE {
   my $self = shift;
