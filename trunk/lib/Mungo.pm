@@ -225,11 +225,11 @@ sub handler($$) {
 
   $self = $self->new($r) unless(ref $self);
   $self->Response()->start();
-  $main::Request = $self->Request();
-  $main::Response = $self->Response();
-  $main::Server = $self->Server();
   local $SIG{__DIE__} = \&Mungo::MungoDie;
   eval {
+    $main::Request = $self->Request();
+    $main::Response = $self->Response();
+    $main::Server = $self->Server();
     $self->Response()->Include($r->filename);
   };
   if($@) {
