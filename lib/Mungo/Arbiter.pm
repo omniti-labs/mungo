@@ -22,11 +22,11 @@ sub TIEHASH {
   my $class = shift;
   my $parent = shift;
   my $data = shift;
-  return bless { 'Mungo' => $parent, data => $data }, $class;
+  return bless { '__Internal__' => $parent, data => $data }, $class;
 }
 sub UNTIE {
   my $self = shift;
-  delete $self->{'Mungo'};
+  delete $self->{'__Internal__'};
 }
 sub FIRSTKEY {
   my $self = shift;
@@ -47,14 +47,7 @@ sub EXISTS {
   my $key = shift;
   return exists $self->{data}->{$key};
 }
-sub DELETE {
-  my $self = shift;
-  my @details = caller(1);
-  my $key = shift;
-  if($details[3] =~ /::cleanse$/) {
-    delete $self->{data}->{$key};
-  }
-}
+sub DELETE { }
 sub STORE {
   my ($self, $key, $value) = @_;
   my $cv = $self->check_map($key);

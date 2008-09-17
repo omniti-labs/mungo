@@ -106,57 +106,61 @@ sub DESTROY {
 
 sub cleanse {
   my $self = shift;
-  if(ref $self->{'IO_stack'} eq 'ARRAY') {
-    while (@{$self->{'IO_stack'}}) {
-      my $fh = pop @{$self->{'IO_stack'}};
+  my $_r = tied %$self;
+  if(ref $_r->{data}->{'IO_stack'} eq 'ARRAY') {
+    while (@{$_r->{data}->{'IO_stack'}}) {
+      my $fh = pop @{$_r->{data}->{'IO_stack'}};
       close(select($fh));
     }
   }
-  delete $self->{$_} for keys %$self;
+  delete $_r->{data}->{$_} for keys %$self;
   untie %$self if tied %$self;
 }
 
 sub send_http_header {
   my $self = shift;
-  my $r = $self->{'Apache::Request'};
-  return if($self->{'__HEADERS_SENT__'});
-  $self->{'__HEADERS_SENT__'} = 1;
-  if($self->{CacheControl} eq 'no-cache') {
+  my $_r = tied %$self;
+  my $r = $_r->{data}->{'Apache::Request'};
+  return if($_r->{data}->{'__HEADERS_SENT__'});
+  $_r->{data}->{'__HEADERS_SENT__'} = 1;
+  if($_r->{data}->{CacheControl} eq 'no-cache') {
     $r->no_cache(1);
   }
   else {
     if($r->can('headers_out')) {
-      $r->headers_out->set('Cache-Control' => $self->{CacheControl});
+      $r->headers_out->set('Cache-Control' => $_r->{data}->{CacheControl});
     }
     else {
-      $r->header_out('Cache-Control' => $self->{CacheControl});
+      $r->header_out('Cache-Control' => $_r->{data}->{CacheControl});
     }
   }
-  $self->{Cookies}->inject_headers($r);
-  $r->status($self->{Status});
+  # Must use Internal as the tiehash is magic for cookies
+  $_r->{'__Internal__'}->{Cookies}->inject_headers($r);
+  $r->status($_r->{data}->{Status});
   $r->can('send_http_header') ?
-    $r->send_http_header($self->{ContentType}) :
-    $r->content_type($self->{ContentType});;
+    $r->send_http_header($_r->{data}->{ContentType}) :
+    $r->content_type($_r->{data}->{ContentType});;
 }
 
 sub start {
   my $self = shift;
-  return if(exists $self->{'IO_stack'} &&
-            scalar(@{$self->{'IO_stack'}}) > 0);
-  $self->{'IO_stack'} = [];
+  my $_r = tied %$self;
+  return if(exists $_r->{data}->{'IO_stack'} &&
+            scalar(@{$_r->{data}->{'IO_stack'}}) > 0);
+  $_r->{data}->{'IO_stack'} = [];
   tie *DIRECT, ref $self, $self;
-  push @{$self->{'IO_stack'}}, select(DIRECT);
+  push @{$_r->{data}->{'IO_stack'}}, select(DIRECT);
 }
 
 sub finish {
   my $self = shift;
-  # Unbuffer outselves, this will actually induce a flush
-  $self->{Buffer} = 0;
+  my $_r = tied %$self;
+  # Unbuffer outselves, this will actually induce a flush (must go through tiehash)
+  $_r->{'__Internal__'}->{Buffer} = 0;
   untie *DIRECT if tied *DIRECT;
-  return unless(exists $self->{'IO_stack'});
-  my $fh = $self->{'IO_stack'}->[0];
-  delete $self->{'IO_stack'};
-  die __PACKAGE__." IO stack of wrong depth" if(scalar(@{$self->{'IO_stack'}}) != 1);
+  return unless(exists $_r->{data}->{'IO_stack'});
+  my $fh = $_r->{data}->{'IO_stack'}->[0];
+  die __PACKAGE__." IO stack of wrong depth" if(scalar(@{$_r->{data}->{'IO_stack'}}) != 1);
 }
 
 =head2 $Response->AddHeader('header_name' => 'header_value');
@@ -169,14 +173,17 @@ Dies if headers (or any other output) has already been sent.
 
 sub AddHeader {
   my $self = shift;
-  my $r = $self->{'Apache::Request'};
-  die "Headers already sent." if($self->{'__HEADERS_SENT__'});
+  my $_r = tied %$self;
+  my $r = $_r->{data}->{'Apache::Request'};
+  die "Headers already sent." if($_r->{data}->{'__HEADERS_SENT__'});
   $r->can('headers_out') ? $r->headers_out->set(@_) : $r->header_out(@_);
 }
 sub Cookies {
   my $self = shift;
-  die "Headers already sent." if($self->{'__HEADERS_SENT__'});
-  my $cookie = $self->{'Cookies'};
+  my $_r = tied %$self;
+  die "Headers already sent." if($_r->{data}->{'__HEADERS_SENT__'});
+  # Must use Internal as the tiehash is magic for cookies
+  my $cookie = $_r->{'__Internal__'}->{'Cookies'};
   $cookie->__set(@_);
 }
 
@@ -191,9 +198,10 @@ Dies if headers (or any other output) has already been sent.
 sub Redirect {
   my $self = shift;
   my $url = shift;
-  die "Cannot redirect, headers already sent\n" if($self->{'__HEADERS_SENT__'});
-  $self->{Status} = shift || 302;
-  my $r = $self->{'Apache::Request'};
+  my $_r = tied %$self;
+  die "Cannot redirect, headers already sent\n" if($_r->{data}->{'__HEADERS_SENT__'});
+  $_r->{data}->{Status} = shift || 302;
+  my $r = $_r->{data}->{'Apache::Request'};
   $r->can('headers_out') ? $r->headers_out->set('Location', $url) :
                            $r->header_out('Location', $url);
   $self->send_http_header();
@@ -216,26 +224,27 @@ The results of evaluating the code is printed to STDOUT.
 sub Include {
   my $self = shift;
   my $subject = shift;
+  my $_r = tied %$self;
   my $rv;
   eval {
     local $SIG{__DIE__} = \&Mungo::MungoDie;
     if(ref $subject) {
-      $rv = $self->{'Mungo'}->include_mem($subject, @_);
+      $rv = $_r->{data}->{Mungo}->include_mem($subject, @_);
     }
     else {
-      $rv = $self->{'Mungo'}->include_file($subject, @_);
+      $rv = $_r->{data}->{Mungo}->include_file($subject, @_);
     }
   };
   if($@) {
     # If we have more than 1 item in the IO stack, we should just re-raise.
-    if (scalar(@{$self->{'IO_stack'} || []}) > 1) {
+    if (scalar(@{$_r->{data}->{'IO_stack'} || []}) > 1) {
       local $SIG{__DIE__} = undef;
       die $@;
     }
     my $hashref = $@;
     eval {
-      if($self->{OnError}) {
-        $self->{OnError}->($self, $hashref, $subject);
+      if($_r->{data}->{OnError}) {
+        $_r->{data}->{OnError}->($self, $hashref, $subject);
       }
       else {
         $self->defaultErrorHandler($hashref, $subject);
@@ -257,6 +266,7 @@ sub defaultErrorHandler {
   my $self = shift;
   my $href = shift; # Our Error
   my $subject = shift;
+  my $_r = tied %$self;
   print "Error in Include($subject):<br />\n";
   my $pkg = $href->{callstack}->[0]->[0];
   my $preamble = eval "\$${pkg}::Mungo_preamble;";
@@ -274,7 +284,7 @@ sub defaultErrorHandler {
   }
 
   if($contents) {
-    if($self->{'Apache::Request'}->dir_config('Debug')) {
+    if($_r->{data}->{'Apache::Request'}->dir_config('Debug')) {
       print Mungo::Utils::pretty_print_code($preamble, $contents, $postamble, $href->{callstack}->[0]->[2]);
     }
   } else {
@@ -290,15 +300,16 @@ Like Include(), but results are returned as a string, instead of being printed.
 
 sub TrapInclude {
   my $self = shift;
+  my $_r = tied %$self;
   my $output;
   my $handle = \do { local *HANDLE };
   tie *{$handle}, 'Mungo::Response::Trap', \$output;
-  push @{$self->{'IO_stack'}}, select(*{$handle});
+  push @{$_r->{data}->{'IO_stack'}}, select(*{$handle});
   eval {
     $self->Include(@_);
   };
   untie *{$handle} if tied *{$handle};
-  select(pop @{$self->{'IO_stack'}});
+  select(pop @{$_r->{data}->{'IO_stack'}});
   if($@) {
     local $SIG{__DIE__} = undef;
     die $@;
@@ -316,8 +327,9 @@ No further processing will occur.
 
 sub End {
   my $self = shift;
-  while(scalar(@{$self->{'IO_stack'} || []}) > 1) {
-    my $oldfh = select(pop @{$self->{'IO_stack'}});
+  my $_r = tied %$self;
+  while(scalar(@{$_r->{data}->{'IO_stack'} || []}) > 1) {
+    my $oldfh = select(pop @{$_r->{data}->{'IO_stack'}});
     if(my $obj = tied *{$oldfh}) {
       untie *{$oldfh};
       print $$obj;
@@ -329,14 +341,15 @@ sub End {
 
 sub Flush {
   my $self = shift;
+  my $_r = tied %$self;
   # Flush doesn't apply unless we're immediately above STDOUT
-  return if(scalar(@{$self->{'IO_stack'} || []}) > 1);
-  unless($self->{'__OUTPUT_STARTED__'}) {
+  return if(scalar(@{$_r->{data}->{'IO_stack'} || []}) > 1);
+  unless($_r->{data}->{'__OUTPUT_STARTED__'}) {
     $self->send_http_header;
-    $self->{'__OUTPUT_STARTED__'} = 1;
+    $_r->{data}->{'__OUTPUT_STARTED__'} = 1;
   }
-  if (@{$self->{'IO_stack'} || []}) {
-      $self->{'IO_stack'}->[-1]->print($one_true_buffer);
+  if (@{$_r->{data}->{'IO_stack'} || []}) {
+      $_r->{data}->{'IO_stack'}->[-1]->print($one_true_buffer);
   } else {
       print $one_true_buffer;
   }
@@ -359,47 +372,51 @@ sub TIEHANDLE {
 sub PRINT {
   my $self = shift;
   my $output = shift;
-  if(scalar(@{$self->{'IO_stack'} || []}) == 1) {
+  my $_r = tied %$self;
+  if(scalar(@{$_r->{data}->{'IO_stack'} || []}) == 1) {
     # Buffering a just-in-time headers only applies if we
     # immediately above STDOUT
-    if($self->{Buffer}) {
+    if($_r->{data}->{Buffer}) {
       $one_true_buffer .= $output;
       return;
     }
-    unless($self->{'__OUTPUT_STARTED__'}) {
-      $self->{'__OUTPUT_STARTED__'} = 1;
+    unless($_r->{data}->{'__OUTPUT_STARTED__'}) {
+      $_r->{data}->{'__OUTPUT_STARTED__'} = 1;
       $self->send_http_header;
     }
   }
-  if (@{$self->{'IO_stack'} || []}) {
-      $self->{'IO_stack'}->[-1]->print($output);
+  if (@{$_r->{data}->{'IO_stack'} || []}) {
+      $_r->{data}->{'IO_stack'}->[-1]->print($output);
   } else {
       print $output;
   }
 }
 sub PRINTF {
   my $self = shift;
-  if(scalar(@{$self->{'IO_stack'} || []}) == 1) {
+  my $_r = tied %$self;
+  if(scalar(@{$_r->{data}->{'IO_stack'} || []}) == 1) {
     # Buffering a just-in-time headers only applies if we
     # immediately above STDOUT
-    if($self->{Buffer}) {
+    if($_r->{data}->{Buffer}) {
       $one_true_buffer .= sprintf(@_);
       return;
     }
-    unless($self->{'__OUTPUT_STARTED__'}) {
-      $self->{'__OUTPUT_STARTED__'} = 1;
+    unless($_r->{data}->{'__OUTPUT_STARTED__'}) {
+      $_r->{data}->{'__OUTPUT_STARTED__'} = 1;
       $self->send_http_header;
     }
   }
-  if (@{$self->{'IO_stack'} || []}) {
-      $self->{'IO_stack'}->[-1]->printf(@_);
+  if (@{$_r->{data}->{'IO_stack'} || []}) {
+      $_r->{data}->{'IO_stack'}->[-1]->printf(@_);
   } else {
       printf(@_);
   }
 }
 sub CLOSE {
   my $self = shift;
-  $self->{Buffer} = 0;
+  my $_r = tied %$self;
+  # Unbuffer outselves, this will actually induce a flush (must go through tiehash)
+  $_r->{data}->{Buffer} = 0;
 }
 sub UNTIE { }
 
