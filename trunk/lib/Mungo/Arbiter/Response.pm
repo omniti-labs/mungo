@@ -20,7 +20,7 @@ sub FETCH {
       eval "use $class;";
       die $@ if $@;
     }
-    return $self->{data}->{$class} = $class->new();
+    return $self->{data}->{$class} = $self->{data}->{$key} = $class->new();
   }
   return $self->SUPER::FETCH($key);
 }
@@ -45,7 +45,7 @@ sub __autoflush {
 
   if($key eq 'Buffer' && $value == 0 &&
      $self->{data}->{$key} != 0) {
-    $self->{'Mungo'}->Flush();
+    $self->{'__Internal__'}->Flush();
     return 1;
   }
   elsif($key eq 'Buffer' && $value != 0 &&
