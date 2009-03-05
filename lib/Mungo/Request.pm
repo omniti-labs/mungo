@@ -31,6 +31,9 @@ Mungo::Request - represent an HTTP request context
      my $refer = $Request->ServerVariables('REFERRER'); # Same
      my $server_hostname = $Request->ServerVariables('HTTP_HOST');
      my $client_ip = $Request->ServerVariables('REMOTE_IP'); # If proxied, uses HTTP_X_FORWARDED_FOR.
+
+     my $header = $Request->Header('HeaderName');
+
   %>
 
   <!-- Get cookies -->
@@ -278,6 +281,21 @@ sub ServerVariables {
 
     }
     return undef;
+}
+
+=head2 $value = $Request->Header('User-Agent');
+
+Returns raw header information from the request header.
+
+=cut
+
+sub Header {
+    my $self = shift;
+    my $hname = shift;
+    my $r = $self->{'Mungo'}->{'Apache::Request'};
+    return $r->can('headers_in')
+      ? $r->headers_in->get($hname)
+        : $r->header_in($hname);
 }
 
 sub AUTOLOAD {
