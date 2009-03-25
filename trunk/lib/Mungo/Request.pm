@@ -146,20 +146,29 @@ Params() is preferred.
 
 sub QueryString {
   my $self = shift;
-  my (@params) = $self->{'Mungo'}->{'Apache::Request'}->args;
-  my %qs;
-  if(@params == 1) {
-    # in mod_perl2 ->args is just a string
-    %qs = map { s/\+/ /g; s/%([0-9a-f]{2})/chr(hex($1))/ige; $_ }
-              (map { (split /=/, $_, 2) } (split /&/, $params[0]));
+  my $qs_string = $self->{'Mungo'}->{'Apache::Request'}->args;
+
+  my %params;
+  foreach my $kv_pair (split /&/, $qs_string) {
+      my ($k, $v) = split(/=/, $kv_pair, 2);
+
+      # $v = uri_unescape($v); # If CPAN dep on URI::Escape were allowed
+      $v =~ s/%([0-9a-f]{2})/chr(hex($1))/ige;
+      $v =~ s/\+/ /g;
+
+      if (exists($params{$k}) && ref($params{$k})) {
+          push @{$params{$k}}, $v;
+      } elsif (exists($params{$k})) {
+          $params{$k} = [ $params{$k}, $v];
+      } else {
+          $params{$k} = $v;
+      }
   }
-  else {
-    # mod_perl1 splits it up for us
-    %qs = @params;
+  if (@_) {
+      return exists($params{$_[0]}) ? $params{$_[0]} : undef;
   }
-  return exists($qs{$_[0]})?$qs{$_[0]}:undef if(@_);
-  return %qs if wantarray;
-  return \%qs;
+  return %params if wantarray;
+  return \%params;
 }
 
 sub decode_form {
