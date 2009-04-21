@@ -128,10 +128,10 @@ sub send_http_header {
   }
   else {
     if($r->can('headers_out')) {
-      $r->headers_out->set('Cache-Control' => $_r->{data}->{CacheControl});
+      $r->err_headers_out->set('Cache-Control' => $_r->{data}->{CacheControl});
     }
     else {
-      $r->header_out('Cache-Control' => $_r->{data}->{CacheControl});
+      $r->err_header_out('Cache-Control' => $_r->{data}->{CacheControl});
     }
   }
   # Must use Internal as the tiehash is magic for cookies
@@ -176,7 +176,7 @@ sub AddHeader {
   my $_r = tied %$self;
   my $r = $_r->{data}->{'Apache::Request'};
   die "Headers already sent." if($_r->{data}->{'__HEADERS_SENT__'});
-  $r->can('headers_out') ? $r->headers_out->set(@_) : $r->header_out(@_);
+  $r->can('headers_out') ? $r->err_headers_out->set(@_) : $r->err_header_out(@_);
 }
 sub Cookies {
   my $self = shift;
@@ -202,8 +202,8 @@ sub Redirect {
   die "Cannot redirect, headers already sent\n" if($_r->{data}->{'__HEADERS_SENT__'});
   $_r->{data}->{Status} = shift || 302;
   my $r = $_r->{data}->{'Apache::Request'};
-  $r->can('headers_out') ? $r->headers_out->set('Location', $url) :
-                           $r->header_out('Location', $url);
+  $r->can('headers_out') ? $r->err_headers_out->set('Location', $url) :
+                           $r->err_header_out('Location', $url);
   $self->send_http_header();
   $self->End();
 }
