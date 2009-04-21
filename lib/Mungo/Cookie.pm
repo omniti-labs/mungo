@@ -136,8 +136,8 @@ sub inject_headers {
   while(my ($cname, $info) = each %$self) {
     my $cookiestr = $self->make_cookie_string($cname, $info);
     $r->can('headers_out') ?
-      $r->headers_out->add('Set-Cookie', $cookiestr) :
-      $r->header_out('Set-Cookie', $cookiestr);
+      $r->err_headers_out->add('Set-Cookie', $cookiestr) :
+      $r->err_header_out('Set-Cookie', $cookiestr);
   }
   return;
 }
