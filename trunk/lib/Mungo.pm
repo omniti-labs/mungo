@@ -188,6 +188,7 @@ use Mungo::Request;
 use Mungo::Response;
 use Mungo::Error;
 use HTML::Entities;
+use Encode;
 
 use vars qw/$VERSION
             $DEFAULT_POST_BLOCK $DEFAULT_POST_MAX_SIZE
@@ -379,7 +380,7 @@ sub contents2packagename {
   my($self, $contents) = @_;
   my $type = ref $self;
   $type =~ s/::(?:File|Mem)Page::[^:]+$//;
-  return $type . "::MemPage::" . md5_hex($$contents);
+  return $type . "::MemPage::" . md5_hex( encode_utf8($$contents) );
 }
 
 
