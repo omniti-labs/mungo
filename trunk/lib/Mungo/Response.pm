@@ -184,6 +184,10 @@ sub Cookies {
   die "Headers already sent." if($_r->{data}->{'__HEADERS_SENT__'});
   # Must use Internal as the tiehash is magic for cookies
   my $cookie = $_r->{'__Internal__'}->{'Cookies'};
+  unless ($cookie) {
+      # Ok, use the magic version to construct one.
+      $cookie = $self->{'Cookies'};
+  }
   $cookie->__set(@_);
 }
 
