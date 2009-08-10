@@ -424,7 +424,7 @@ sub include_file {
       local $/ = undef;
       $contents = <$ifile>;
     }
-    return unless $self->packagize($pkg, \$contents);
+    return unless $self->packagize($pkg, \$contents, $filename);
     # The packagize was successful, make content do __content
     eval "*${pkg}::content = \\&${pkg}::__content";
     # Track what we just compiled
@@ -440,6 +440,7 @@ sub packagize {
   my $self = shift;
   my $pkg = shift;
   my $contents = shift;
+  my $filename_hint = shift || '(unknown location)';
   my $expr = convertStringToExpression($contents);
   my $type = ref $self;
   $type =~ s/::(?:File|Mem)Page::[^:]+$//;
@@ -483,7 +484,7 @@ sub packagize {
     my ($line) = ($error->{error} =~ /line (\d+)/m);
     unshift @{$error->{callstack}},
       [
-        $pkg, '(ASP include)', $line
+        $pkg, $filename_hint, $line, '(ASP include)'
       ];
     local $SIG{__DIE__} = undef;
     die $error;
