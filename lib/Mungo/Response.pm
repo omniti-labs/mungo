@@ -233,6 +233,12 @@ sub Include {
     my $subject = shift;
     my $_r = tied %$self;
     my $rv;
+
+    if ($DEBUG > 1) {
+        print STDERR __PACKAGE__ . ':' . __LINE__ . "- Have self OnError as " . $self->{data}->{OnError} . "\n";
+        print STDERR __PACKAGE__ . ':' . __LINE__ . "- Have tied OnError as " . $_r->{data}->{OnError} . "\n";
+    }
+
     eval {
         local $SIG{__DIE__} = \&Mungo::wrapErrorsInObjects;
         if(ref $subject) {
@@ -242,7 +248,7 @@ sub Include {
         }
     };
     if($@) {
-        if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Have level one error: $@\n"; }
+        if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Have level one error: " . $@ . "\n"; }
 
         # If we have more than 1 item in the IO stack, we should just re-raise.
         if (scalar(@{$_r->{data}->{'IO_stack'} || []}) > 1) {
