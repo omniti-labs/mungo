@@ -226,7 +226,7 @@ sub handler($$) {
 
   $self = $self->new($r) unless(ref $self);
   $self->Response()->start();
-  local $SIG{__DIE__} = \&Mungo::MungoDie;
+  local $SIG{__DIE__} = \&Mungo::wrapErrorsInObjects;
   eval {
     $main::Request = $self->Request();
     $main::Response = $self->Response();
@@ -254,7 +254,7 @@ sub handler($$) {
 }
 
 
-sub MungoDie {
+sub wrapErrorsInObjects {
   my $i = 0;
   my @callstack;
   while(my @callinfo = caller($i++)) {
