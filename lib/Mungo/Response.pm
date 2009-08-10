@@ -70,6 +70,9 @@ use Mungo::Utils;
 use HTML::Entities;
 our $AUTOLOAD;
 
+our $DEBUG = 0;
+use Data::Dumper;
+
 my $one_true_buffer = '';
 
 sub new {
@@ -226,43 +229,46 @@ The results of evaluating the code is printed to STDOUT.
 =cut
 
 sub Include {
-  my $self = shift;
-  my $subject = shift;
-  my $_r = tied %$self;
-  my $rv;
-  eval {
-    local $SIG{__DIE__} = \&Mungo::MungoDie;
-    if(ref $subject) {
-      $rv = $_r->{data}->{Mungo}->include_mem($subject, @_);
-    }
-    else {
-      $rv = $_r->{data}->{Mungo}->include_file($subject, @_);
-    }
-  };
-  if($@) {
-    # If we have more than 1 item in the IO stack, we should just re-raise.
-    if (scalar(@{$_r->{data}->{'IO_stack'} || []}) > 1) {
-      local $SIG{__DIE__} = undef;
-      die $@;
-    }
-    my $hashref = $@;
+    my $self = shift;
+    my $subject = shift;
+    my $_r = tied %$self;
+    my $rv;
     eval {
-      if($_r->{data}->{OnError}) {
-        $_r->{data}->{OnError}->($self, $hashref, $subject);
-      }
-      else {
-        $self->defaultErrorHandler($hashref, $subject);
-      }
+        local $SIG{__DIE__} = \&Mungo::wrapErrorsInObjects;
+        if(ref $subject) {
+            $rv = $_r->{data}->{Mungo}->include_mem($subject, @_);
+        } else {
+            $rv = $_r->{data}->{Mungo}->include_file($subject, @_);
+        }
     };
     if($@) {
-      # Oh, dear lord this is bad.  We'd died trying to print out death.
-      print STDERR "Mungo::Response -> die in error renderer\n";
-      print STDERR $hashref;
-      print STDERR $@;
+        if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Have level one error: $@\n"; }
+
+        # If we have more than 1 item in the IO stack, we should just re-raise.
+        if (scalar(@{$_r->{data}->{'IO_stack'} || []}) > 1) {
+            local $SIG{__DIE__} = undef;
+            if ($DEBUG > 1) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- rethrowing\n"; }
+            die $@;
+        }
+        my $hashref = $@;
+        eval {
+            if($_r->{data}->{OnError}) {
+                if ($DEBUG > 1) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- have custom error handler, calling\n"; }
+                $_r->{data}->{OnError}->($self, $hashref, $subject);
+            } else {
+                if ($DEBUG > 1) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- no custom error handler, using default\n"; }
+                $self->defaultErrorHandler($hashref, $subject);
+            }
+        };
+        if ($@) {
+            # Oh, dear lord this is bad.  We'd died trying to print out death.
+            print STDERR "Mungo::Response -> die in error renderer\n";
+            print STDERR $hashref;
+            print STDERR $@;
+        }
+        return undef;
     }
-    return undef;
-  }
-  return $rv;
+    return $rv;
 }
 
 sub defaultErrorHandler {
@@ -271,6 +277,8 @@ sub defaultErrorHandler {
   my $href = shift; # Our Error
   my $subject = shift;
   my $_r = tied %$self;
+  if ($DEBUG > 1) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- in default error handler\n"; }
+
   print "Error in Include($subject):<br />\n";
   my $pkg = $href->{callstack}->[0]->[0];
   my $preamble = eval "\$${pkg}::Mungo_preamble;";
