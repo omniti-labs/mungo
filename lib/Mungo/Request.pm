@@ -292,6 +292,18 @@ sub ServerVariables {
     return undef;
 }
 
+=head2 $bool = $req->IsSecure();
+
+Returns true or false depending on whether the request came in over HTTPS.
+
+=cut
+
+sub IsSecure {
+    my $self = shift;
+    my $r = $self->{Mungo}->{'Apache::Request'};
+    return $r->can('headers_in') ? $r->headers_in->get('X-SSL') : $r->header_in('X-SSL');
+}
+
 =head2 $value = $Request->Header('User-Agent');
 
 Returns raw header information from the request header.
