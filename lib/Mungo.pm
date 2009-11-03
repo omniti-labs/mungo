@@ -221,6 +221,7 @@ sub handler($$) {
     $r = $self;
     $self = __PACKAGE__;
   }
+  my $preamble_class = $r->dir_config('MungoPreamble');
   # Short circuit if we can't find the file.
   return NOT_FOUND() if(! -r $r->filename);
 
@@ -228,10 +229,16 @@ sub handler($$) {
   $self->Response()->start();
   local $SIG{__DIE__} = \&Mungo::wrapErrorsInObjects;
   eval {
+    my $doit = Apache2::Const::DECLINED;
     $main::Request = $self->Request();
     $main::Response = $self->Response();
     $main::Server = $self->Server();
-    $self->Response()->Include($r->filename);
+    if($preamble_class) {
+      $doit = $preamble_class->handler($r, $self->Request(),
+                                       $self->Response(), $self->Server());
+    }
+    $self->Response()->Include($r->filename)
+      if($doit == Apache2::Const::DECLINED);
   };
   if($@) {
     # print out the error to the logs
