@@ -9,7 +9,12 @@ Mungo - An Apache::ASP inspired lightweight ASP framework
  # In your httpd.conf:
  <FilesMatch "\.asp$">
    SetHandler perl-script
+
    PerlHandler Mungo
+
+   # This is optional, see PREAMBLE SUPPORT below
+   PerlSetVar MungoPreamble My::PreambleHandler
+
  </FilesMatch>
 
  # In asp pages:
@@ -156,7 +161,71 @@ are not using sessions or the XML features, you should find few obstacles
 in making your application run under Mungo (it could be as simple as
 setting PerlHandler Mungo in your httpd.conf file).
 
+
+=head2 Preamble Support
+
+In addition to normal Apache stacked handlers, Mungo also supports a 
+mechanism for inserting code to execute before every Mungo request is 
+processed, while still having access to the Mungo environment.
+
+To use this mechanism, define a Perl module as follows:
+
+  package My::PreambleHandler;
+  use strict;
+  use warnings;
+
+  use Apache2::Const qw ( OK DECLINED ); # Others as needed by your code
+
+  sub handler {
+     my $class          = shift;
+     my $apache_request = shift;
+     my $mungo_request  = shift;
+     my $mungo_response = shift;
+     my $mungo_server   = shift;
+
+     # Determine what to do with the request, if anything
+
+     if ( ... ) {
+         # Continue normal Mungo processing
+         return Apache2::Const::DECLINED;
+
+     } elsif ( ... ) {
+         # If handled entirely within the preamble, skip further Mungo work
+         return Apache2::Const::OK;
+
+     } elsif ( ... ) {
+         # Returning anything other than DECLINED will 
+         # skip further Mungo work - but should be informative
+         # for example, if the user's credentials are bad...
+         return Apache2::Const::NOT_AUTHORIZED;
+     }
+
+  }
+
+With your preamble code in hand, you may now register this code to run on a per-location, directory, or file basis:
+
+  <Location /restricted>
+    SetHandler perl-script
+    PerlSetVar MungoPreamble My::AuthorizationCheckingPreamble
+    PerlHandler Mungo
+  </location>
+
+=head3 Limitations of Preambles
+
+=over
+
+=item Limit of one Preamble per location/file/directory stanza
+
+If you require more flexibility, Apache stacked handlers are likely a better solution for you (though you will not have the Mungo environment setup in your stacked handler).
+
+=item Preambles Modules will not be automatically loaded
+
+You can add a PerlRequire directive to httpd.conf, or 'use' your preamble class in your startup.pl
+
+=back
+
 =cut
+
 
 
 #=============================================================================#
@@ -171,7 +240,7 @@ use IO::File;
 eval "
   use Apache2::RequestRec;
   use Apache2::RequestUtil;
-  use Apache2::Const qw ( OK NOT_FOUND );
+  use Apache2::Const qw ( OK NOT_FOUND DECLINED );
 ";
 if($@) {
   print STDERR "mod_perl2 not found: $@";
