@@ -264,7 +264,7 @@ use vars qw/$VERSION
             $DEFAULT_POST_MAX_PART $DEFAULT_POST_MAX_IN_MEMORY/;
 
 my $SVN_VERSION = 0;
-$SVN_VERSION = $1 if(q$LastChangedRevision: 301 $ =~ /(\d+)/);
+$SVN_VERSION = $1 if(q$Revision$ =~ /(\d+)/);
 $VERSION = "1.0.0.${SVN_VERSION}";
 
 $DEFAULT_POST_BLOCK = 1024*32;          # 32k
