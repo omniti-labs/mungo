@@ -298,7 +298,7 @@ sub handler($$) {
   $self->Response()->start();
   local $SIG{__DIE__} = \&Mungo::wrapErrorsInObjects;
   eval {
-    my $doit = Apache2::Const::DECLINED;
+    my $doit = Apache2::Const::DECLINED();
     $main::Request = $self->Request();
     $main::Response = $self->Response();
     $main::Server = $self->Server();
@@ -307,7 +307,7 @@ sub handler($$) {
                                        $self->Response(), $self->Server());
     }
     $self->Response()->Include($r->filename)
-      if($doit == Apache2::Const::DECLINED);
+      if($doit == Apache2::Const::DECLINED());
   };
   if($@) {
     # print out the error to the logs
