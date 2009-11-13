@@ -166,6 +166,35 @@ sub finish {
   die __PACKAGE__." IO stack of wrong depth" if(scalar(@{$_r->{data}->{'IO_stack'}}) != 1);
 }
 
+=head2 $Response->i18nHandler($coderef);
+
+Sets the i18n translation handler for the output.  This is translate phases
+(or keys) in templates annotated like I[[keyname]].  If the handler is unset
+the default behaviour is to pass the keyname through so "I[[Firstname]]"
+becomes "Firstname"  The handler passed in should take one argument (the key)
+and return the replacement text.
+
+=head2 $Response->i18n($text)
+
+Runs the registered i18n handler on the supplied text returning the
+translation.
+
+=cut
+
+sub i18nHandler {
+  my $self = shift;  my $_r = tied %$self;
+  $_r->{data}->{'i18n_handler'} = shift if (@_);
+  return $_r->{data}->{'i18n_handler'};
+}
+
+sub i18n {
+  my $self = shift;  my $_r = tied %$self;
+  my $key = shift;
+  my $handler = $_r->{data}->{'i18n_handler'};
+  return ($handler && ref $handler eq 'CODE') ? $handler->($key) : $key;
+}
+
+
 =head2 $Response->AddHeader('header_name' => 'header_value');
 
 Adds an HTTP header to the response.
