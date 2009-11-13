@@ -572,15 +572,20 @@ sub packagize {
 sub convertStringToExpression {
   my $string_ref = shift;
   my $string = $$string_ref;
+  sub __string_as_i18n {
+    return '' unless(length($_[0]));
+    my $s = Dumper($_[0]);
+    substr($s, 0, 7) = '<%= $main::Response->i18n(';
+    substr($s, -2, 1) = ') %>';
+    return $s;
+  }
   sub __string_as_print {
     return '' unless(length($_[0]));
     my $s = Dumper($_[0]);
     substr($s, 0, 7) = 'print';
     return $s;
   }
-  # The first is needed b/c variable with look-behind assertions don't work
-  my $tmp;
-  ($tmp = $string) =~ s/^/# /mg;
+  $string =~ s/I\[\[(.*?)\]\]/__string_as_i18n($1)/seg;
   $string =~ s/^(.*?)(?=<%|$)/__string_as_print($1)/se;
   # Replace non-code
   $string =~ s/(?<=%>)(?!<%)(.*?)(?=<%|$)/__string_as_print($1)/seg;
