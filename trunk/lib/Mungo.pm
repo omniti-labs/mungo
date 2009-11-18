@@ -576,7 +576,7 @@ sub convertStringToExpression {
     return '' unless(length($_[0]));
     my $s = Dumper($_[0]);
     substr($s, 0, 7) = '<%= $main::Response->i18n(';
-    substr($s, -2, 1) = ') %>';
+    substr($s, -2, 2) = ') %>';
     return $s;
   }
   sub __string_as_print {
