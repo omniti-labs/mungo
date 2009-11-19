@@ -1,0 +1,12 @@
+These files are served by the test apache server.  To run the tests:
+
+cd your-mungo-dist
+perl Makefile.PL -apxs `which apxs` # may be apxs2 on some systems
+make test
+
+The ASP files here are grouped together by their test script.  
+So, all files under t/htdocs/02-foo are used by the t/02-foo.t test script.
+Note that not all test scripts have associated pages (eg, 01-dependencies.t)
+
+All test comments and documentation are contained in the test script,
+not in the ASP files.
