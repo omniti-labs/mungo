@@ -1,0 +1,22 @@
+#file:t/conf/extra.conf.in
+#-------------------------
+# this file will be Include-d by @ServerRoot@/conf/httpd.conf
+  
+# where Mungo can be found
+PerlSwitches -I@ServerRoot@/../lib
+
+# preload the module
+PerlModule Mungo
+
+# Always treat .asp files as Mungo, no matter where they are
+<FilesMatch \.asp$>
+   SetHandler perl-script
+   PerlHandler Mungo
+</FilesMatch>
+
+# For 03-running, make sure we can run Mungo even with other names
+<Location /03-running/mungo>
+   SetHandler perl-script
+   PerlHandler Mungo
+</Location>
+
