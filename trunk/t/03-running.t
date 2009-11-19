@@ -2,7 +2,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::Test qw(-withtestmore);
+use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 use Test::More tests => 10;
 
