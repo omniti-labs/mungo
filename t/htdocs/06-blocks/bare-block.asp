@@ -1,0 +1,3 @@
+<% { %>
+mungo-success
+<% } %>
