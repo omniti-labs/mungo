@@ -5,6 +5,9 @@ use warnings FATAL => 'all';
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 
+use lib './t/lib';
+use lib '../t/lib';
+use MungoTestUtils;
 
 # 04-parser.t
 # Goal: Confirm that the Mungo parser correctly assembles simple things in the right order with the right spaces.
@@ -66,23 +69,19 @@ BEGIN {
                                                  Trailer\n       # literal newline in print
                                                  $
                                          }x,
-
-
+              'quoted-start-tag-bug17' => {
+                                           todo => "Awaiting bugfix on trac ticket 17",
+                                           like => qr{
+                                                         ^
+                                                         \n
+                                                         mungo-success\n
+                                                         \n
+                                                 }x,
+                                          },
              );
     $test_count = 4*(scalar keys %tests);
 }
 
 use Test::More tests => $test_count;
 
-my ($url, $response, $content, $pattern);
-
-foreach my $test_page (sort keys %tests) { # Sort is so the order is repeatable
-    my $url = '/04-parser/' . $test_page . '.asp';
-    my $response = GET $url;
-    ok($response->is_success, "Fetch of $url should be a success");
-    my $content = $response->content();
-    my $pattern = $tests{$test_page};
-    like($content, $pattern, "Content of $url should be correct");
-    unlike($content, qr{<\%}, "Content of by-ext $url should not contain mungo start tag '<\%'");
-    unlike($content, qr{\%>}, "Content of by-ext $url should not contain mungo end tag '\%>'");
-}
+perform_page_tests('/04-parser/', \%tests);
