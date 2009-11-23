@@ -9,6 +9,9 @@ our @EXPORT = ();
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 use Test::More import => [qw(is ok like unlike $TODO)];
+use Test::WWW::Mechanize qw();
+use Data::Dumper;
+
 
 =head2 perform_page_tests('/01-foo/', \%tests);
 
@@ -80,5 +83,47 @@ sub do_one_page_test {
     unlike($content, qr{<\%}, "$url should not contain mungo start tag '<\%'");
     unlike($content, qr{\%>}, "$url should not contain mungo end tag '\%>'");
 }
+
+=head2 $str = get_url_base();
+
+Returns a string like 'http://localhost:8529', on which
+the test server is running.
+
+=cut
+
+push @EXPORT, 'get_url_base';
+sub get_url_base {
+    my $cfg = Apache::Test::config();
+    #print Dumper($cfg);
+    my $url = $cfg->{vars}->{scheme} 
+      . '://'
+        . $cfg->{vars}->{remote_addr}
+          . ':'
+            . $cfg->{vars}->{port};
+
+    return $url;
+}
+
+=head2 $mech = make_mech();
+
+Creates and returns a Test::WWW::Mechanize object.  It will be primed with the
+base URL to be that of the test server.
+
+=cut
+
+push @EXPORT, 'make_mech';
+sub make_mech {
+    my $mech = Test::WWW::Mechanize->new
+      (
+       cookie_jar => {},  # enable cookies
+       max_redirect => 0, # don't automatically follow redirects
+      );
+
+    # Do one fetch to set the internal URL base
+    $mech->get(get_url_base);
+
+    return $mech;
+}
+
 
 1;
