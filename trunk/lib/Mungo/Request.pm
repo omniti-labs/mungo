@@ -49,11 +49,32 @@ Mungo::Request - represent an HTTP request context
 
   %>
 
+  <!-- Get uploaded file data -->
+  <%
+     # Assuming you have <input type="file" name="myfile" />
+
+     my $param = $Request->Params->{myfile};
+
+     my $handle = $param->{handle};
+     my $filename_on_client = $param->{filename};
+     my $total_size = $param->{size};
+     my $content_type = $param->{'content-type'}; # Not entirely reliable - consider File::MMagic or similar
+
+     # $handle is a IO::Handle subclass
+     my ($content, $chunk);
+     while (my $bytes_read = $handle->read($chunk, 1024)) {
+        $content .= $chunk;
+     )
+
+  %>
+
+
+
 =head1 DESCRIPTION
 
 Represents the request side of a Mungo request cycle.
 
-See Mungo, and Mungo::Request.
+See Mungo, and Mungo::Response.
 
 =cut
 
