@@ -260,14 +260,14 @@ use HTML::Entities;
 use Encode;
 
 use vars qw/$VERSION
-            $DEFAULT_POST_BLOCK $DEFAULT_POST_MAX_SIZE
+            $DEFAULT_POST_BLOCK_SIZE $DEFAULT_POST_MAX_SIZE
             $DEFAULT_POST_MAX_PART $DEFAULT_POST_MAX_IN_MEMORY/;
 
 my $SVN_VERSION = 0;
 $SVN_VERSION = $1 if(q$Revision$ =~ /(\d+)/);
 $VERSION = "1.0.0.${SVN_VERSION}";
 
-$DEFAULT_POST_BLOCK = 1024*32;          # 32k
+$DEFAULT_POST_BLOCK_SIZE = 1024*32;          # 32k
 $DEFAULT_POST_MAX_SIZE = 0;             # unlimited post size
 $DEFAULT_POST_MAX_PART = 0;             # and part size
 $DEFAULT_POST_MAX_IN_MEMORY = 1024*128; # 128k
