@@ -52,7 +52,7 @@ sub new {
                         $self->{$name} = [ $self->{$name}, $part ];
                     }
                 } else {
-                    $self->{$part->{name}} = $part;
+                    $self->{$name} = $part;
                 }
 
             } else {
@@ -67,7 +67,7 @@ sub new {
                         $self->{$name} = [ $self->{$name}, $part->{payload} ];
                     }
                 } else {
-                    $self->{$part->{name}} = $part->{payload};
+                    $self->{$name} = $part->{payload};
                 }
             }
         } else {
