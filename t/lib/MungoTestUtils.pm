@@ -10,7 +10,7 @@ use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 use Test::More import => [qw(is ok like unlike $TODO)];
 use Test::WWW::Mechanize qw();
-use Data::Dumper;
+use File::Temp qw(tempfile);
 
 
 =head2 perform_page_tests('/01-foo/', \%tests);
@@ -125,5 +125,46 @@ sub make_mech {
     return $mech;
 }
 
+=head2 $path = make_dummy_file($size_in_bytes, $binary);
+
+Makes a file filled with random numbers.  Returns the absolute path to the file.
+
+=cut
+
+push @EXPORT, 'make_dummy_file';
+sub make_dummy_file {
+    my $desired_size = shift;
+    my $binary = shift || 0;
+    my $handle = File::Temp->new(UNLINK => 0); # Set to 0 to leave the file hanging around
+    #my $handle = File::Temp->new(UNLINK => 1);
+    my $name = $handle->filename();
+
+    unless ($desired_size) {
+        close $handle;
+        return $name;
+    }
+    my $begin = "BEGIN MARKER\n";
+    my $begin_length = length($begin);
+    my $end = "END MARKER\n";
+    $desired_size = $desired_size - length($begin) - length($end);
+    print $handle $begin;
+    if ($binary) {
+        $desired_size--; # Needed because echo will add a newline before and after
+        close $handle;
+        system("/bin/dd if=/dev/urandom of=$name count=$desired_size bs=1 seek=$begin_length conv=fsync status=noxfer 2> /dev/null");
+        system("/bin/echo '$end' >> $name");
+    } else {
+        my $remaining = $desired_size;
+        while ($remaining >= 10240) {
+            print $handle ('X' x 10239) . "\n";
+            $remaining -= 10240;
+        }
+        print $handle 'X' x $remaining;
+        print $handle $end;
+        close $handle;
+    }
+
+    return $name;
+}
 
 1;
