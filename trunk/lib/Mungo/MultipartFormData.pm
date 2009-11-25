@@ -9,6 +9,7 @@ use Mungo;
 use Mungo::Request;
 use File::Temp;
 use IO::File;
+use Data::Dumper;
 eval "use Apache2::RequestIO;";
 
 =head2 $mpfd = Mungo::MultipartFormData->new($req, $length, $boundary);
@@ -35,9 +36,12 @@ sub new {
                 # Prep the Part for reading as a fielhandle.
                 if (exists($part->{payload}) && !exists($part->{handle})) {
                     # So we have a payload, but not a handle?  Must have been a small file.
+
                     # Create a new IO::Handle by opening the payload "in memory"
                     # See perldoc -f open and perldoc perliol
-                    open($part->{handle}, "<", \$part->{payload});
+                    # I would MUCH rather use IO::Scalar for this - it's much saner and more clear
+                    open($part->{handle}, "<", \$part->{payload}); # just threw up in my mouth a little
+                    bless $part->{handle}, 'IO::Handle'; # just threw up in my mouth a lot
                     delete $part->{payload};
                 }
                 $part->{handle}->seek(0,0) if(UNIVERSAL::can($part->{handle}, 'seek'));
@@ -200,7 +204,7 @@ sub append {
             $self->{handle}->print($self->{payload}) || die "cannot write to tmpfile $file";
             delete $self->{payload};
 
-            # Next time we append, since we have $self->{handle}, we'll print imemdiately.
+            # Next time we append, since we have $self->{handle}, we'll print immediately.
         }
     }
 }
