@@ -3,7 +3,10 @@
 # this file will be Include-d by @ServerRoot@/conf/httpd.conf
   
 # where Mungo can be found
-PerlSwitches -I@ServerRoot@/../lib
+PerlSwitches -I@ServerRoot@/../blib
+
+# Required for some tests in group 13-errors
+PerlSwitches -I@ServerRoot@/htdocs/13-errors/lib
 
 # preload the module
 PerlModule Mungo
