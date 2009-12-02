@@ -47,6 +47,7 @@ push @EXPORT, 'perform_page_tests';
 sub perform_page_tests {
     my $base = shift;
     my $tests = shift;
+    my $test_count_ref = shift;
 
     foreach my $test_page (sort keys %$tests) { # Sort is so the order is repeatable
         my $info = $tests->{$test_page};
@@ -55,33 +56,61 @@ sub perform_page_tests {
         }
         $info->{page} = $test_page;
         $info->{base} = $base;
+        $info->{label} ||= $test_page;
 
         my $todo    = $info->{todo} || 0;
 
         if ($todo) {
           TODO: {
                 local $TODO = $todo;
-                do_one_page_test($info);
+                do_one_page_test($info, $test_count_ref);
             }
         } else {
-            do_one_page_test($info);
+            do_one_page_test($info, $test_count_ref);
         }
     }
 }
 sub do_one_page_test {
     my $info = shift;
+    my $test_count_ref = shift;
     my $qs      = $info->{query} || '';
     my $status  = $info->{status} || 200;
     my $pattern = $info->{like};
     my $page    = $info->{page};
+    my $label   = $info->{label};
 
     my $url = $info->{base} . $page . '.asp' . $qs;
+
     my $response = GET $url;
-    is($response->code, $status, "Fetch of $url should be HTTP status $status");
+    is($response->code, $status, "$label should have HTTP status $status");
+    $$test_count_ref++;
+
+    # Header check
+    if ($info->{header}) {
+        my ($name, $value) = @{$info->{header}};
+        my $saw = $response->header($name);
+        is($saw, $value, "$label should have header value on response");
+        $$test_count_ref++;
+    }
+
+    # Content Checks
     my $content = $response->content();
-    like($content, $pattern, "Content of $url should be correct");
-    unlike($content, qr{<\%}, "$url should not contain mungo start tag '<\%'");
-    unlike($content, qr{\%>}, "$url should not contain mungo end tag '\%>'");
+    like($content, $pattern, "$label should have correct content");
+    $$test_count_ref++;
+
+    unlike($content, qr{(<\%)|(\%>)}, "$label should not contain mungo start or end tags ");
+    $$test_count_ref++;
+
+    # Did an error occur?
+    if ($info->{error_regex}) {
+        like($content, $info->{error_regex}, "$label should be a Mungo error with the correct content");
+        $$test_count_ref++;
+    } else {
+        # No error should have occurred.
+        unlike($content, qr{Error in Include}, "$label should not appear to be a Mungo Include Error");
+        $$test_count_ref++;
+    }
+
 }
 
 =head2 $str = get_url_base();

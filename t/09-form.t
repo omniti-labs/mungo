@@ -114,7 +114,6 @@ BEGIN {
                                      bar => 2,
                                     },
                        },
-              # BUG trac18 fails in mpfd mode
               'repeated' => {
                              form_spec => {
                                            multi => 1,

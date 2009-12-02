@@ -4,6 +4,7 @@ use warnings FATAL => 'all';
 
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
+use Test::More;
 
 use lib './t/lib';
 use lib '../t/lib';
@@ -42,38 +43,33 @@ mungo-success
 
 =cut
 
-my %tests;
 my $test_count;
+my $cond_pattern = qr{
+                         ^
+                         \n
+                         mungo-success\n
+                         \n
+                         $
+                 }x;
+my $loop_pattern = qr{
+                         ^
+                         \n*1\n*2\n*3\n*4\n*5\n*6\n*7\n*8\n*9\n+
+                         mungo-success
+                         $
+                 }x;
 
-BEGIN {
-    my $cond_pattern = qr{
-                             ^
-                             \n
-                             mungo-success\n
-                             \n
-                             $
-                     }x;
-    my $loop_pattern = qr{
-                             ^
-                             \n*1\n*2\n*3\n*4\n*5\n*6\n*7\n*8\n*9\n+
-                             mungo-success
-                             $
-                     }x;
+my %tests = (
+             'bare-block'    => $cond_pattern,
+             'if'            => $cond_pattern,
+             'if-else'       => $cond_pattern,
+             'if-elsif-else' => $cond_pattern,
+             'unless'        => $cond_pattern,
+             'for'           => $loop_pattern,
+             'for-next'      => $loop_pattern,
+             'for-last'      => $loop_pattern,
+             'while'         => $loop_pattern,
+            );
 
-    %tests = (
-              'bare-block'    => $cond_pattern,
-              'if'            => $cond_pattern,
-              'if-else'       => $cond_pattern,
-              'if-elsif-else' => $cond_pattern,
-              'unless'        => $cond_pattern,
-              'for'           => $loop_pattern,
-              'for-next'      => $loop_pattern,
-              'for-last'      => $loop_pattern,
-              'while'         => $loop_pattern,
-             );
-    $test_count = 4*(scalar keys %tests);
-}
-
-use Test::More tests => $test_count;
-perform_page_tests('/06-blocks/', \%tests);
+perform_page_tests('/06-blocks/', \%tests, \$test_count);
+done_testing($test_count);
 
