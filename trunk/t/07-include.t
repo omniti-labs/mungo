@@ -4,10 +4,12 @@ use warnings FATAL => 'all';
 
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
+use Test::More;
 
 use lib './t/lib';
 use lib '../t/lib';
 use MungoTestUtils;
+
 
 # 07-blocks.t
 # Goal: Exercise Mungo's include and trap-include functionality
@@ -26,27 +28,23 @@ mungo-success
 
 =cut
 
-my %tests;
 my $test_count;
 
-BEGIN {
-    my $pattern = qr{
-                        ^
-                        \n
-                        mungo-success\n
-                        \n
-                        $
-                }x;
+my $pattern = qr{
+                    ^
+                    \n
+                    mungo-success\n
+                    \n
+                    $
+            }x;
 
-    %tests = (
-              'include-relative'  => $pattern,
-              'include-string'    => $pattern,
-              'include-pass-args' => $pattern,
-              'trap-include'      => $pattern,
-             );
-    $test_count = 4*(scalar keys %tests);
-}
+my %tests = (
+             'include-relative'  => $pattern,
+             'include-string'    => $pattern,
+             'include-pass-args' => $pattern,
+             'trap-include'      => $pattern,
+            );
 
-use Test::More tests => $test_count;
-perform_page_tests('/07-include/', \%tests);
+perform_page_tests('/07-include/', \%tests, \$test_count);
+done_testing($test_count);
 

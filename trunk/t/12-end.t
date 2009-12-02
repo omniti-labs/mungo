@@ -27,7 +27,6 @@ mungo-success
 =cut
 
 my $test_count = 0;
-our $TODO;
 my %tests = (
 
              'preceding-text' => {
@@ -57,32 +56,8 @@ my %tests = (
                                         },
             );
 
-foreach my $test (sort keys %tests) {
-    my %info = %{$tests{$test}};
-    my $url = '/12-end/' . $test . '.asp';
-    my $response = GET $url;
-    my $label = $info{label};
-    my $status = $info{status};
 
-  TODO: {
-        local $TODO = $info{todo};
-        is($response->code(), $status, "$label should return a code $status");
-        $test_count++;
-
-        my $content = $response->content();
-        like($content, $info{like}, "$label should have the correct content on the response");
-        $test_count++;
-
-        if ($info{header}) {
-            my ($name, $value) = @{$info{header}};
-            my $saw = $response->header($name);
-            is($saw, $value, "$label should have header value on response");
-            $test_count++;
-        }
-    }
-}
-
-
+perform_page_tests('/12-end/', \%tests, \$test_count);
 done_testing($test_count);
 
 
