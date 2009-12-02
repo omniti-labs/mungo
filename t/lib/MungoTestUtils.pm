@@ -54,9 +54,11 @@ sub perform_page_tests {
         unless (ref($info) eq 'HASH') {
             $info = { like => $info };
         }
+        next if $info->{hardskip};
         $info->{page} = $test_page;
         $info->{base} = $base;
         $info->{label} ||= $test_page;
+        $info->{status} ||= 200;
 
         my $todo    = $info->{todo} || 0;
 
@@ -74,16 +76,17 @@ sub do_one_page_test {
     my $info = shift;
     my $test_count_ref = shift;
     my $qs      = $info->{query} || '';
-    my $status  = $info->{status} || 200;
-    my $pattern = $info->{like};
     my $page    = $info->{page};
     my $label   = $info->{label};
 
     my $url = $info->{base} . $page . '.asp' . $qs;
 
     my $response = GET $url;
-    is($response->code, $status, "$label should have HTTP status $status");
-    $$test_count_ref++;
+  TODO: {
+        local $TODO = $info->{status} == 500 ? 'awaiting fix on trac17' : $TODO;
+        is($response->code, $info->{status}, "$label should have HTTP status $info->{status}");
+        $$test_count_ref++;
+    }
 
     # Header check
     if ($info->{header}) {
@@ -95,9 +98,14 @@ sub do_one_page_test {
 
     # Content Checks
     my $content = $response->content();
-    like($content, $pattern, "$label should have correct content");
-    $$test_count_ref++;
-
+    if ($info->{like}) {
+        like($content, $info->{like}, "$label should have correct content");
+        $$test_count_ref++;
+    }
+    if ($info->{unlike}) {
+        unlike($content, $info->{unlike}, "$label should not have incorrect content");
+        $$test_count_ref++;
+    }
     unlike($content, qr{(<\%)|(\%>)}, "$label should not contain mungo start or end tags ");
     $$test_count_ref++;
 
