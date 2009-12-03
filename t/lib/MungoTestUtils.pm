@@ -80,8 +80,9 @@ sub do_one_page_test {
     my $label   = $info->{label};
 
     my $url = $info->{base} . $page . '.asp' . $qs;
+    my %opts = %{$info->{request_options} || {}};
 
-    my $response = GET $url;
+    my $response = GET $url, %opts;
   TODO: {
         local $TODO = $info->{status} == 500 ? 'awaiting fix on trac17' : $TODO;
         is($response->code, $info->{status}, "$label should have HTTP status $info->{status}");
@@ -137,9 +138,6 @@ sub do_one_page_test {
     foreach my $extra_test_hook (@{$info->{extra_tests}}) {
         $extra_test_hook->($info, $response, $test_count_ref);
     }
-
-
-
 }
 
 =head2 $str = get_url_base();
