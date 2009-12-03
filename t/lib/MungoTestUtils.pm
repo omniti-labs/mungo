@@ -8,7 +8,7 @@ our @EXPORT = ();
 
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
-use Test::More import => [qw(is ok like unlike $TODO)];
+use Test::More import => [qw(is ok like unlike $TODO is_deeply)];
 use Test::WWW::Mechanize qw();
 use File::Temp qw(tempfile);
 
@@ -55,7 +55,7 @@ sub perform_page_tests {
             $info = { like => $info };
         }
         next if $info->{hardskip};
-        $info->{page} = $test_page;
+        $info->{page} ||= $test_page;
         $info->{base} = $base;
         $info->{label} ||= $test_page;
         $info->{status} ||= 200;
@@ -118,6 +118,27 @@ sub do_one_page_test {
         unlike($content, qr{Error in Include}, "$label should not appear to be a Mungo Include Error");
         $$test_count_ref++;
     }
+
+    # Eval-Dumper Test
+    if ($info->{eval_dump}) {
+        my $expected = $info->{eval_dump};
+        my $got;
+        eval $content;
+        is($@, '', "$label should eval its response without error");
+        $$test_count_ref++;
+
+        is_deeply($got, $expected, "$label should have the correct dumpered data");
+        $$test_count_ref++;
+    }
+
+    # Permit custom hooks, too
+    $info->{extra_tests} ||= [];
+    $info->{extra_tests} = ref($info->{extra_tests}) eq 'ARRAY' ? $info->{extra_tests} : [ $info->{extra_tests} ];
+    foreach my $extra_test_hook (@{$info->{extra_tests}}) {
+        $extra_test_hook->($info, $response, $test_count_ref);
+    }
+
+
 
 }
 
