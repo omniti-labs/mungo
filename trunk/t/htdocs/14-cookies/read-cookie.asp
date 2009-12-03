@@ -1,4 +1,4 @@
-<%
+<% #> -*-cperl-*-
 use Data::Dumper;
 
 if($Request->QueryString('setcookie') eq 'issue') {
