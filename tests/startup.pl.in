@@ -1,4 +1,0 @@
-use lib '@@CHECKOUT@@/lib';
-eval "use Devel::DTrace;";
-use Mungo;
-1;
