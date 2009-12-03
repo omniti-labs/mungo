@@ -11,11 +11,30 @@ Mungo::Cookie - Cookie support class
 =head1 SYNOPSIS
 
   # Use via Mungo::Request->Cookies
-  my $value = $Request->cookies($cookie_name, $key_name);
+  my $value = $Request->Cookies($cookie_name, $key_name);
 
 =head1 DESCRIPTION
 
-Represents one or more 
+Represents one or more cookies.
+
+=head2 SETTING A COOKIE
+
+TODO trac22
+
+=head2 SETTING COOKIE PROPERTIES
+
+TODO trac22
+
+=head2 READING A COOKIE
+
+TODO trac22
+
+=head2 CLEARING A COOKIE
+
+To clear a cookie, set an expiration date in the past.  You can do this most easily by providing a negative number for the Expires value.
+
+  # Expire 24 hours ago
+  $Response->Cookie($cookie_name, 'Expires', '-24h');
 
 =cut
 
@@ -104,7 +123,7 @@ sub make_cookie_string {
     } ($cname, $info->{Value}));
   }
   if(exists $info->{Expires}) {
-    if($info->{Expires} =~ /^\d+([smhdwMy])?$/) {
+    if($info->{Expires} =~ /^-?\d+([smhdwMy])?$/) {
       my $s = $info->{Expires} * $time_multiplier{$1 || 's'};
       $info->{Expires} = Mungo::Utils::time2str(time + $s);
     }
