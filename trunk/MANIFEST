@@ -123,3 +123,5 @@ t/htdocs/13-errors/runtime-method-on-unblessed.asp
 t/htdocs/13-errors/compile-use.asp
 t/htdocs/13-errors/compile-use-source-dump.asp
 
+t/16-cache-compiled.t
+t/htdocs/16-cache-compiled/echo-compile-time.asp
