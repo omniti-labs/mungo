@@ -125,3 +125,11 @@ t/htdocs/13-errors/compile-use-source-dump.asp
 
 t/16-cache-compiled.t
 t/htdocs/16-cache-compiled/echo-compile-time.asp
+t/htdocs/17-buffer/buffer-in-page.asp
+t/htdocs/17-buffer/buffer-via-conf.asp
+t/htdocs/17-buffer/late-headers.asp
+t/htdocs/17-buffer/late-headers-subinclude.asp
+t/htdocs/17-buffer/no-buffer.asp
+t/htdocs/17-buffer/unbuffer-override-conf.asp
+t/htdocs/17-buffer/late-headers-sub-stub.inc
+t/17-buffer.t

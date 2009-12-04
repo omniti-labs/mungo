@@ -23,3 +23,6 @@ PerlModule Mungo
    PerlHandler Mungo
 </Location>
 
+<LocationMatch /17-buffer/(buffer-via-conf|unbuffer-override-conf).asp>
+   PerlSetVar MungoBuffer 1
+</LocationMatch>
