@@ -15,6 +15,10 @@ Mungo - An Apache::ASP inspired lightweight ASP framework
    # This is optional, see PREAMBLE SUPPORT below
    PerlSetVar MungoPreamble My::PreambleHandler
 
+   # Optionally enable output buffering
+   # see Mungo::Response - OUTPUT BUFFERING section
+   PerlSetVar MungoBuffer 1
+
  </FilesMatch>
 
  # In asp pages:

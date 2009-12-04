@@ -52,11 +52,40 @@ Mungo::Response - Represent response side of HTTP request cycle
      $Response->Cookies($cookie_name, 'Expires', $value);
      $Response->Cookies($cookie_name, 'Path', $value);
      $Response->Cookies($cookie_name, 'Secure', $value);
+
+     # See perldoc Mungo::Cookie for more details
   %>
 
 =head1 DESCRIPTION
 
-Represents the response side of the Mungo request cycle.
+Represents the response side of the Mungo request cycle.  All operations related to output are contained in this object.
+
+=head2 OUTPUT BUFFERING
+
+By default, output is not buffered.  Output (resulting from print() statements or <%= %> tags) is immediately sent to the browser.  Mungo does support a buffering mechanism, in which the entire contents of the response (or sub-include) are collected before the first character is output.  The buffer does not have a size limit, other than practical limits of your machine; nor is it chunked in any way.
+
+You can enable buffering in two ways.  From within httpd.conf, you can use the MungoBuffer Perl variable:
+
+  # Can use Directory, Files, Location, etc.
+  <Directory /www/slowboat>
+     # Any Perlishly true value will work
+     SetPerlVar MungoBuffer 1
+  </Directory>
+
+Additionally, you can enable (or disable) buffering within a particular request-response cycle:
+
+  <%
+     # Decide to turn on buffering
+     $Response->{Buffer} = 1;
+  %>
+
+Disabling buffering (when it was previously enabled) will cause an immediate flush.
+
+At the end of the request, the buffer is flushed in its entirety.
+
+If you enable buffering at the top-level page, you can add headers throughout the response, even after generating output.  Without buffering, this would normally be an error.  This advantage does not apply to sub-includes.  Of course, if you generated output and then later enabled buffering, you cannot later add headers.
+
+=head1 METHODS
 
 =cut
 
