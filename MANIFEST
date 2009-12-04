@@ -133,3 +133,6 @@ t/htdocs/17-buffer/no-buffer.asp
 t/htdocs/17-buffer/unbuffer-override-conf.asp
 t/htdocs/17-buffer/late-headers-sub-stub.inc
 t/17-buffer.t
+t/18-quiet.t
+t/htdocs/18-quiet/bad-use.asp
+t/htdocs/18-quiet/mungo-error-doc.txt
