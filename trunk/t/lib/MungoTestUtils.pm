@@ -82,6 +82,10 @@ sub do_one_page_test {
     my $url = $info->{base} . $page . '.asp' . $qs;
     my %opts = %{$info->{request_options} || {}};
 
+    if ($info->{pre_fetch}) {
+        $info->{pre_fetch}->($info);
+    }
+
     my $response = GET $url, %opts;
   TODO: {
         local $TODO = $info->{status} == 500 ? 'awaiting fix on trac17' : $TODO;
@@ -98,7 +102,12 @@ sub do_one_page_test {
     }
 
     # Content Checks
-    my $content = $response->content();
+    my $content;
+    if ($info->{get_content}) {
+        $content = $info->{get_content}->();
+    } else {
+        $content = $response->content();
+    }
     if ($info->{like}) {
         like($content, $info->{like}, "$label should have correct content");
         $$test_count_ref++;
