@@ -76,6 +76,8 @@ Represents the request side of a Mungo request cycle.
 
 See Mungo, and Mungo::Response.
 
+Mungo::Request acts as a singleton on a per-request basis.  So even if you have nested includes, there will only ever be one Mungo::Request.  That's generally what you'd expect.
+
 =cut
 
 
@@ -83,13 +85,19 @@ sub new {
   my $class = shift;
   my $parent = shift;
   my $r = $parent->{'Apache::Request'};
+
+  # Check for existing instance - may have been a 
+  # nested include, in which case we've already done all of this setup
   my $singleton = $r->pnotes(__PACKAGE__);
   return $singleton if ($singleton);
+
   my %core_data = (
     'Apache::Request' => $r,
     'Method' => $r->method,
     'Mungo' => $parent,
   );
+
+  # Parse incoming form
   my $cl = $r->can('headers_in') ? $r->headers_in->get('Content-length') :
                                    $r->header_in('Content-length');
   my $ct = $r->can('headers_in') ? $r->headers_in->get('Content-Type') :
@@ -107,10 +115,12 @@ sub new {
       $r->read($core_data{'form_content'}, $core_data{TotalBytes});
     }
   }
+
   my %data;
   $singleton = bless \%data, $class;
   tie %data, 'Mungo::Arbiter::Response', $singleton, \%core_data;
   $singleton->{Buffer} = $r->dir_config('MungoBuffer') || 0;
+
   $r->pnotes(__PACKAGE__, $singleton);
   return $singleton;
 }
