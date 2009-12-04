@@ -26,3 +26,8 @@ PerlModule Mungo
 <LocationMatch /17-buffer/(buffer-via-conf|unbuffer-override-conf).asp>
    PerlSetVar MungoBuffer 1
 </LocationMatch>
+
+<Location /18-quiet>
+   SetHandler perl-script
+   PerlHandler Mungo::Quiet
+</Location>

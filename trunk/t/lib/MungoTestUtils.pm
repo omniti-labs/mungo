@@ -8,6 +8,7 @@ our @EXPORT = ();
 
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
+use Apache::TestUtil qw(t_start_error_log_watch t_finish_error_log_watch t_client_log_error_is_expected);
 use Test::More import => [qw(is ok like unlike $TODO is_deeply)];
 use Test::WWW::Mechanize qw();
 use File::Temp qw(tempfile);
@@ -86,7 +87,16 @@ sub do_one_page_test {
         $info->{pre_fetch}->($info);
     }
 
+    if ($info->{error_log_scanner}) {
+        t_client_log_error_is_expected();
+        t_start_error_log_watch();
+    }
     my $response = GET $url, %opts;
+    if ($info->{error_log_scanner}) {
+        my @entries = t_finish_error_log_watch();
+        $info->{error_log_scanner}->($info, @entries);
+    }
+
   TODO: {
         local $TODO = $info->{status} == 500 ? 'awaiting fix on trac17' : $TODO;
         is($response->code, $info->{status}, "$label should have HTTP status $info->{status}");
