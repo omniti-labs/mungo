@@ -28,6 +28,7 @@ my %file_expectations = (
                          file_size => 0,
                          begin_seen => 0,
                          end_seen => 0,
+                         content_type => undef,
                         );
 my %seen_expectations = (
                          field_seen => 1,
@@ -35,6 +36,7 @@ my %seen_expectations = (
                          file_size => 0,
                          begin_seen => 1,
                          end_seen => 1,
+                         content_type => 'text/plain',
                         );
 foreach (1..9) {
     $expectations{'file_test_' . $_} = { %file_expectations };
@@ -190,6 +192,12 @@ foreach my $test_name (sort keys %tests) {
         is($got{looks_like_file}, $expected{looks_like_file}, "$label - got a file handle test");
         $test_count++;
         unless ($expected{looks_like_file}) { next FILE_FIELD; }
+
+        # Right MIME type?
+        if ($expected{file_size}) {
+            is($got{content_type}, $expected{content_type}, "$label - should have right content type");
+            $test_count++;
+        }
 
         # Was the start marker seen?
         is($got{begin_seen}, $expected{begin_seen}, "$label - should see BEGIN MARKER ");

@@ -19,7 +19,7 @@
                    end_seen => 0,
                   };
        my $field = $f->{$name};
-       # $results{$name}{field} = $field;  # Enable this for diagnostics
+       #$results{$name}{field} = $field;  # Enable this for diagnostics
        unless ($field) {
           next NUM;
        }
@@ -34,6 +34,7 @@
        }
 
        $results{$name}{looks_like_file} = 1;
+       $results{$name}{content_type} = $field->{'content-type'};
        my $total_size = 0;
        my $last_chunk = '';
        my $chunk = '';
