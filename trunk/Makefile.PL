@@ -14,6 +14,11 @@ my %require =
   );
 my @scripts = qw(t/TEST);
 
+# Require apxs option
+unless (grep {$_ eq '-apxs' } @ARGV) {
+    die "You must provide the '-apxs PATH_TO_APXS' option to 'perl Makefile.PL'";
+}
+
 # accept the configs from command line
 Apache::TestMM::filter_args();
 Apache::TestMM::generate_script('t/TEST');
