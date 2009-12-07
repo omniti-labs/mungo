@@ -8,7 +8,7 @@ use Apache::TestRequest qw(GET);
 use lib './t/lib';
 use lib '../t/lib';
 use MungoTestUtils;
-use Test::More;
+
 use HTTP::Cookies;
 use Time::HiRes qw(gettimeofday);
 
@@ -16,6 +16,23 @@ $| = 1;
 
 # 17-buffer.t
 # Goal: Exercise Mungo's Buffer-mode abilities
+
+
+# In order to perform the buffering tests, we need to time each 
+# chunk as it arrives.  So, we need response-chunk-handlers, which
+#  were added in LWP::UA v 5.827
+my $HAVE_LWP_UA_HANDLERS;
+BEGIN {
+    use LWP::UserAgent;
+    $HAVE_LWP_UA_HANDLERS = $LWP::UserAgent::VERSION >= 5.827;
+
+    unless ($HAVE_LWP_UA_HANDLERS) {
+        eval "use Test::More skip_all => 'need LWP::UserAgent version 5.827 or newer to test buffering';";
+    }
+}
+
+use Test::More;
+
 
 my $test_count = 0;
 my %tests = (
