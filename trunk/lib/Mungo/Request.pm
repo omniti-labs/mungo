@@ -316,9 +316,14 @@ sub ServerVariables {
         # Eliminate private network IPs, which we assume to be the backside of a proxy server
         my @not_private_ips = grep { $_ && $_ !~ /^127\.0\.0\.1|^192\.168\.|^10\./ } @single_ips;
 
-        # Return the first remaining address
-        return $not_private_ips[0];
-
+        # If we have at least one non-private IP, return that, otherwise return the first defined private IP.
+        if (scalar @not_private_ips) {
+            return $not_private_ips[0];
+        }
+        else {
+            my @valid_possible_ips = grep { defined $_ } @possible_ips; # sometimes they're undef
+            return $valid_possible_ips[0];
+        }
     }
     return undef;
 }
