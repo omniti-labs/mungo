@@ -16,7 +16,12 @@ my @scripts = qw(t/TEST);
 
 # Require apxs option
 unless (grep {$_ eq '-apxs' } @ARGV) {
-    die "You must provide the '-apxs PATH_TO_APXS' option to 'perl Makefile.PL'";
+    if (exists $ENV{'APXS'}) {
+        push @ARGV, ('-apxs', $ENV{'APXS'});
+    }
+    else {
+        die "You must provide the '-apxs PATH_TO_APXS' option to 'perl Makefile.PL'";
+    }
 }
 
 # accept the configs from command line
