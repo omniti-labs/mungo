@@ -9,7 +9,6 @@ BEGIN {
     %modules = (
                 'Apache::Test' => '',
                 'mod_perl2' => '',
-                'Test::WWW::Mechanize' => '',
                );
 }
 
