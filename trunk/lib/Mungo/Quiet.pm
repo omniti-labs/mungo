@@ -95,6 +95,8 @@ sub handler($$) {
 
     if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Have filename " . $r->filename . "\n"; }
 
+    my $preamble_class = $r->dir_config('MungoPreamble');
+
     # Short circuit if we can't find the file.
     return NOT_FOUND if(! -r $r->filename);
 
@@ -113,12 +115,17 @@ sub handler($$) {
     # will end up with a 'goto MUNGO_HANDLER_FINISH'
 
     eval {
+        my $doit = Apache2::Const::DECLINED();
         $main::Request = $self->Request();
         $main::Response = $self->Response();
         $main::Server = $self->Server();
-        if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Entering Include \n"; }
-        $self->Response()->Include($r->filename);
-        if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Survived Include \n"; }
+        if($preamble_class) { $doit = $preamble_class->handler($r, $self->Request(), $self->Response(), $self->Server()); }
+
+        if ( $doit == Apache2::Const::DECLINED() ) {
+            if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Entering Include \n"; }
+            $self->Response()->Include($r->filename);
+            if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Survived Include \n"; }
+        }
     };
 
     # CODE HERE WILL NEVER GET EXECUTED
