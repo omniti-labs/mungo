@@ -10,8 +10,12 @@ use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 use Apache::TestUtil qw(t_start_error_log_watch t_finish_error_log_watch t_client_log_error_is_expected);
 use Test::More import => [qw(is ok like unlike $TODO is_deeply)];
-use Test::WWW::Mechanize qw();
 use File::Temp qw(tempfile);
+
+# This comes from our bundled /inc/
+use lib './inc';
+use lib '../inc';
+use Test::WWW::Mechanize qw();
 
 
 =head2 perform_page_tests('/01-foo/', \%tests);
@@ -199,6 +203,7 @@ sub make_mech {
 
     return $mech;
 }
+
 
 =head2 $path = make_dummy_file($size_in_bytes, $binary);
 
