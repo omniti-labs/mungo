@@ -2,12 +2,14 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::Test qw();
-use Apache::TestRequest qw(GET);
-
 use lib './t/lib';
 use lib '../t/lib';
 use MungoTestUtils;
+
+use Apache::Test qw();
+use Apache::TestRequest qw(GET);
+
+
 use Test::More;
 
 # 11-redirect.t
