@@ -122,7 +122,6 @@ t/htdocs/13-errors/compile-stricture.asp
 t/htdocs/13-errors/runtime-method-on-unblessed.asp
 t/htdocs/13-errors/compile-use.asp
 t/htdocs/13-errors/compile-use-source-dump.asp
-
 t/16-cache-compiled.t
 t/htdocs/16-cache-compiled/echo-compile-time.asp
 t/htdocs/17-buffer/buffer-in-page.asp
@@ -136,3 +135,7 @@ t/17-buffer.t
 t/18-quiet.t
 t/htdocs/18-quiet/bad-use.asp
 t/htdocs/18-quiet/mungo-error-doc.txt
+t/19-filename.t
+t/htdocs/19-filename/one-level.asp
+t/htdocs/19-filename/two-level.asp
+t/htdocs/19-filename/stringy.asp

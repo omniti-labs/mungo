@@ -244,7 +244,7 @@ use IO::File;
 eval "
   use Apache2::RequestRec;
   use Apache2::RequestUtil;
-  use Apache2::Const qw ( OK NOT_FOUND DECLINED );
+  use Apache2::Const qw ( OK NOT_FOUND DECLINED SERVER_ERROR);
 ";
 if($@) {
   print STDERR "mod_perl2 not found: $@";
@@ -427,6 +427,26 @@ sub HTMLDecode {
   return HTML::Entities::decode_entities( $s );
 }
 
+sub CurrentFile {
+    my $self = shift;
+    my @file_stack;
+
+    # Unwind the stack.  Each time we hit a package whose name
+    # begins with Mungo::FilePage, demangle the name and push onto our list.
+    my $frame_count = 0;
+    while (my @frame = caller($frame_count)) {
+        $frame_count++;
+        my $package = $frame[0];
+        if ($package =~ /Mungo::(File|Mem)Page/) {
+            my $awkwardly_built_string = $self->demangle_name($package . '::__content');
+            $awkwardly_built_string =~ s{Mungo::(File|Mem)Page\((.+)\)}{$2};
+            push @file_stack, $awkwardly_built_string;
+        }
+    }
+    print STDERR "have file_stack:\n" . Dumper(\@file_stack);
+
+    return wantarray() ? @file_stack : $file_stack[0];
+}
 
 # Private?
 sub demangle_name {
