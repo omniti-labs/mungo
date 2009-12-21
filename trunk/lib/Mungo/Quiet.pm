@@ -73,6 +73,8 @@ at the top of your page:
 
 =cut
 
+use Mungo;
+
 our $DEBUG = 0;
 
 # Set this to true if desired
