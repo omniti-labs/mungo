@@ -2,13 +2,14 @@
 use strict;
 use warnings FATAL => 'all';
 
+use lib './t/lib';
+use lib '../t/lib';
+use MungoTestUtils;
+
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 use Test::More;
 
-use lib './t/lib';
-use lib '../t/lib';
-use MungoTestUtils;
 
 # 06-blocks.t
 # Goal: Exercise Mungo's handling of Perl Blocks

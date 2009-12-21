@@ -2,13 +2,13 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::Test qw();
-use Apache::TestRequest qw(GET);
-use Test::More;
-
 use lib './t/lib';
 use lib '../t/lib';
 use MungoTestUtils;
+
+use Apache::Test qw();
+use Apache::TestRequest qw(GET);
+use Test::More;
 
 
 # 07-blocks.t

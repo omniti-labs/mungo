@@ -2,13 +2,16 @@
 use strict;
 use warnings FATAL => 'all';
 
+use lib './t/lib';
+use lib '../t/lib';
+use MungoTestUtils;
+
+
 use Apache::Test qw();
 use Apache::TestRequest qw(GET POST);
 use Test::More import => [qw(is ok is_deeply diag)];
 
-use lib './t/lib';
-use lib '../t/lib';
-use MungoTestUtils;
+
 use Test::More; # will use done_testing to count tests
 
 # 10-upload.t

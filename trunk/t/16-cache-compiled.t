@@ -2,14 +2,15 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::Test qw();
-use Apache::TestRequest qw(GET);
-
 use lib './t/lib';
 use lib '../t/lib';
 use MungoTestUtils;
+
+use Apache::Test qw();
+use Apache::TestRequest qw(GET);
+
+
 use Test::More;
-use HTTP::Cookies;
 
 # 16-cache-compiled.t
 # Goal: Confirm that Mungo caches the compiled version of the ASP in memory
