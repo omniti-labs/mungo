@@ -30,6 +30,10 @@ Mungo::Response - Represent response side of HTTP request cycle
      $Response->AddHeader('header_name' => $value);
   %>
 
+  <!-- path of the current file (handy for debugging) -->
+  <% my $file = $Response->CurrentFile(); %>
+
+
   <!-- Halt processing and jump out of the handler -->
   <%
      # With a 302
@@ -97,6 +101,8 @@ use Mungo::Response::Trap;
 use Mungo::Cookie;
 use Mungo::Utils;
 use HTML::Entities;
+use Apache2::Const qw ( OK NOT_FOUND DECLINED SERVER_ERROR);
+
 our $AUTOLOAD;
 
 our $DEBUG = 0;
@@ -193,6 +199,21 @@ sub finish {
   return unless(exists $_r->{data}->{'IO_stack'});
   my $fh = $_r->{data}->{'IO_stack'}->[0];
   die __PACKAGE__." IO stack of wrong depth" if(scalar(@{$_r->{data}->{'IO_stack'}}) != 1);
+}
+
+=head2 $file = $Response->CurrentFile();
+
+=head2 @nested_files = $Response->CurrentFile();
+
+Returns the path on the filesystem from which the currently executing Mungo code originated.  In the second form, the call stack is unwound, and all files are returned, with the deepest-nested one first.  
+
+If the Mungo code originated from a string reference rather than a file, the file entry will read 'ANON'.
+
+=cut
+
+sub CurrentFile {
+    my $self = shift;
+    return $self->{Mungo}->CurrentFile();
 }
 
 =head2 $Response->i18nHandler($coderef);
@@ -366,6 +387,9 @@ sub defaultErrorHandler {
   } else {
     print '<pre>'.Dumper($@).'</pre>';
   }
+
+  # Set response code to 500.  Fixes trac16
+  $self->{Mungo}->{data}->{ApacheResponseCode} = SERVER_ERROR;
 }
 
 =head2 $output = $Response->TrapInclude($filename, @args);
