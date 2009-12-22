@@ -443,7 +443,7 @@ sub CurrentFile {
             push @file_stack, $awkwardly_built_string;
         }
     }
-    print STDERR "have file_stack:\n" . Dumper(\@file_stack);
+    #print STDERR "have file_stack:\n" . Dumper(\@file_stack);
 
     return wantarray() ? @file_stack : $file_stack[0];
 }
