@@ -5,16 +5,17 @@ use warnings FATAL => 'all';
 use base 'Exporter';
 our @EXPORT = ();
 
+# It's important to push our own /inc/ dir onto @INC before
+# including Apache::Test.  This is because A::T loads LWP::UserAgent,
+# which we bundle for testing, which is needed in a very recent version by Test::WWW::Mechanize.
+use lib './inc';
+use lib '../inc';
 
 use Apache::Test qw();
 use Apache::TestRequest qw(GET);
 use Apache::TestUtil qw(t_start_error_log_watch t_finish_error_log_watch t_client_log_error_is_expected);
 use Test::More import => [qw(is ok like unlike $TODO is_deeply)];
 use File::Temp qw(tempfile);
-
-# This comes from our bundled /inc/
-use lib './inc';
-use lib '../inc';
 use Test::WWW::Mechanize qw();
 
 
