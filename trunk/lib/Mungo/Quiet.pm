@@ -66,6 +66,11 @@ at the top of your page:
 
   $Mungo::Quiet::DUMP_CODE_TO_STDERR = 1;
 
+On errors, Mungo::Quiet will output the error as well as a stack trace to STDERR.
+To turn off print of the stack trace, set this option to false.
+
+  $Mungo::Quiet::DUMP_STACK_TRACE_ON_ERROR = 0;
+
 
 =head1 AUTHOR
 
@@ -79,6 +84,8 @@ our $DEBUG = 0;
 
 # Set this to true if desired
 our $DUMP_CODE_TO_STDERR = 0;
+# Default to true to keep original behavior
+our $DUMP_STACK_TRACE_ON_ERROR = 1;
 
 sub handler($$) {
     my ($invocant, $r) = @_;
@@ -173,9 +180,11 @@ sub quieterMungoErrors {
     my @callstack = @{$error->{callstack}};
 
     # Print basic trace
-    print STDERR "Mungo stack trace:\n";
-    foreach my $frame (@callstack) {
-        print STDERR "\tp:" . $frame->[$package] . "\tf:" . $frame->[$filename] . "\tl:" .$frame->[$line] . "\ts:" . $frame->[$subroutine] . "\n";
+    if ($DUMP_STACK_TRACE_ON_ERROR) {
+        print STDERR "Mungo stack trace:\n";
+        foreach my $frame (@callstack) {
+            print STDERR "\tp:" . $frame->[$package] . "\tf:" . $frame->[$filename] . "\tl:" .$frame->[$line] . "\ts:" . $frame->[$subroutine] . "\n";
+        }
     }
 
     # This is rarely accurate or useful.... and very noisy.
