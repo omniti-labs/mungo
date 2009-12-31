@@ -615,11 +615,12 @@ sub convertStringToExpression {
   $string =~ s/(?<=%>)(?!<%)(.*?)(?=<%|$)/__string_as_print($1)/seg;
   # fixup code
   $string =~ s/
-                <%(=?)(.*?)%>
+                <%([~=]?)(.*?)%>
               /
-              $1 ?
-                "print $2;" :           # This is <%= ... %>
-                "$2;"                   # This is <% ... %>
+              ($1 eq '~') ? "print HTML::Entities::encode_entities($2);" :
+                ($1 eq '=') ? 
+                  "print $2;" :           # This is <%= ... %>
+                  "$2;"                   # This is <% ... %>
               /sexg;
   return $string;
 }
