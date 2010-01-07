@@ -389,6 +389,7 @@ sub defaultErrorHandler {
   }
 
   # Set response code to 500.  Fixes trac16
+  $_r->{data}->{Status} = SERVER_ERROR;
   $self->{Mungo}->{data}->{ApacheResponseCode} = SERVER_ERROR;
 }
 
