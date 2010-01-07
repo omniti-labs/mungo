@@ -158,6 +158,7 @@ sub quieterMungoErrors {
     my $response = shift; # A Mungo::Response object
     my $error = shift; # A Mungo::Error object, or a plain string
     my $subject = shift; # Either a coderef or a filename
+    my $thing = tied %{$response};
 
     if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- In qME\n"; }
 
@@ -165,6 +166,7 @@ sub quieterMungoErrors {
     my $errstr = $have_obj ? $error->{error} : $error;
 
     # Most importantly, set the apache error response
+    $thing->{data}->{Status} = SERVER_ERROR;
     $response->{Mungo}->{data}->{ApacheResponseCode} = SERVER_ERROR;
 
     print STDERR "Mungo error in file $subject:\n";
