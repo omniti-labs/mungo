@@ -393,6 +393,20 @@ sub defaultErrorHandler {
   $self->{Mungo}->{data}->{ApacheResponseCode} = SERVER_ERROR;
 }
 
+=head2 $bool = $Response->Trapped();
+
+Returns 1 if invoked within a TrapInclude, 0 otherwise
+
+=cut
+
+sub Trapped {
+  my $self = shift;
+  my $_r = tied %$self;
+  my $stack = $_r->{data}->{'IO_stack'};
+  return 1 if($stack && scalar(@$stack) > 1);
+  return 0;
+}
+
 =head2 $output = $Response->TrapInclude($filename, @args);
 
 Like Include(), but results are returned as a string, instead of being printed.
