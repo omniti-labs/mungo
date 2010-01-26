@@ -487,6 +487,7 @@ sub TIEHANDLE {
 sub PRINT {
   my $self = shift;
   my $output = shift;
+  return unless length($output);
   my $_r = tied %$self;
   if(scalar(@{$_r->{data}->{'IO_stack'} || []}) == 1) {
     # Buffering a just-in-time headers only applies if we
