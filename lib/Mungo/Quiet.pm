@@ -133,6 +133,8 @@ sub handler($$) {
             $self->Response()->Include($r->filename);
             if ($DEBUG) { print STDERR __PACKAGE__ . ':' . __LINE__ . "- Survived Include \n"; }
         }
+
+        $self->Response()->End();
     };
 
     # CODE HERE WILL NEVER GET EXECUTED

@@ -242,9 +242,9 @@ You can add a PerlRequire directive to httpd.conf, or 'use' your preamble class 
 use strict;
 use IO::File;
 eval "
+  use Apache2::Const qw ( OK NOT_FOUND DECLINED SERVER_ERROR);
   use Apache2::RequestRec;
   use Apache2::RequestUtil;
-  use Apache2::Const qw ( OK NOT_FOUND DECLINED SERVER_ERROR);
 ";
 if($@) {
   print STDERR "mod_perl2 not found: $@";
@@ -312,19 +312,20 @@ sub handler($$) {
     }
     $self->Response()->Include($r->filename)
       if($doit == Apache2::Const::DECLINED());
+    $self->Response()->End();
   };
   if($@) {
     # print out the error to the logs
     print STDERR $@ if($@);
     # If it isn't too late, make this an internal server error
-    eval { $self->Response()->{Status} = 500; };
+    eval { $self->Response()->{Status} = 500; $self->Response()->End() };
   }
 
   # gotos come here from:
   #   $Response->End()
  MUNGO_HANDLER_FINISH:
   $self->Response()->finish();
-  my $code = $self->{data}->{ApacheResponseCode} || OK;
+  my $code = $self->{data}->{ApacheResponseCode} || Apache2::Const::OK;
   $self->cleanse();
   undef $main::Request;
   undef $main::Response;
