@@ -324,13 +324,13 @@ sub handler($$) {
   #   $Response->End()
  MUNGO_HANDLER_FINISH:
   $self->Response()->finish();
-
+  my $code = $self->{data}->{ApacheResponseCode} || OK;
   $self->cleanse();
   undef $main::Request;
   undef $main::Response;
   undef $main::Server;
   undef $self;
-  return &OK;
+  return $code; 
 }
 
 
