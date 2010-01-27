@@ -450,7 +450,17 @@ sub End {
       print $$obj;
     }
   }
-  $self->Flush();
+  # If we have any data to write, or have written anything
+  # then the ball in our court.
+  # However, if we haven't, we should pass the status back
+  # from the main handler so that Apache ErrorDocs wil work.
+  if(($_r->{data}->{Buffer} && length($one_true_buffer)) ||
+     $_r->{data}->{'__OUTPUT_STARTED__'}) {
+    $self->Flush();
+  }
+  else {
+    $self->{Mungo}->{data}->{ApacheResponseCode} = $_r->{data}->{Status};
+  }
   eval { goto  MUNGO_HANDLER_FINISH; }; # Jump back to Mungo::handler()
 }
 

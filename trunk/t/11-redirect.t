@@ -49,13 +49,13 @@ my %tests = (
           'no-following-text' => {
                                   label => "Page with text after redirect",
                                   status => 302,
-                                  initial_like => qr{^$},
+                                  initial_like => qr{302 Found},
                                   redirect_like => qr{^mungo-redirect-success$},
                                  },
           'headers-preceding-redirect' => {
                                            label => "Page with headers prior to redirect",
                                            status => 302,
-                                           initial_like => qr{^$},
+                                           initial_like => qr{302 Found},
                                            initial_header => [ 'X-mungo-test-header' => 'ponies' ],
                                            redirect_like => qr{^mungo-redirect-success$},
                                            #todo => "",
