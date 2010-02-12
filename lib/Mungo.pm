@@ -618,7 +618,7 @@ sub convertStringToExpression {
   $string =~ s/
                 <%([~=]?)(.*?)%>
               /
-              ($1 eq '~') ? "print HTML::Entities::encode_entities($2);" :
+              ($1 eq '~') ? "print HTML::Entities::encode_entities($2,'<&>\"');" :
                 ($1 eq '=') ? 
                   "print $2;" :           # This is <%= ... %>
                   "$2;"                   # This is <% ... %>
