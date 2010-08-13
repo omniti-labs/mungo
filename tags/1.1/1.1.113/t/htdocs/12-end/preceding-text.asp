@@ -1,0 +1,4 @@
+mungo-success
+<%
+   $Response->End();
+%>
