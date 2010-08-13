@@ -1,0 +1,6 @@
+The usual:
+
+perl Makefile.PL
+make
+make test
+sudo make install
