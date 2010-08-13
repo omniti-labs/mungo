@@ -21,7 +21,13 @@ Mungo - An Apache::ASP inspired lightweight ASP framework
 
    # Turn this on if you want pages to recompile on each load
    #          off to cache the bytecode for performance
-   PerlSetVar StatINC 1
+   <IfDefine DEVELOPMENT>
+     PerlSetVar StatINC 1
+   </IfDefine>
+   <IfDefine PRODUCTION>
+     # This is the default anyway
+     PerlSetVar StatINC 0
+   </IfDefine>
 
  </FilesMatch>
 
