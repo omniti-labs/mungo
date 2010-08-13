@@ -19,6 +19,10 @@ Mungo - An Apache::ASP inspired lightweight ASP framework
    # see Mungo::Response - OUTPUT BUFFERING section
    PerlSetVar MungoBuffer 1
 
+   # Turn this on if you want pages to recompile on each load
+   #          off to cache the bytecode for performance
+   PerlSetVar StatINC 1
+
  </FilesMatch>
 
  # In asp pages:
@@ -56,7 +60,6 @@ Mungo - An Apache::ASP inspired lightweight ASP framework
       # Access info about the server
       # TODO - DOCS
       # $Server->
-
 
       # Redirect to somewhere else...
       if ($want_to_redirect) {
