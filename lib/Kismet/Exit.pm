@@ -68,7 +68,29 @@ sub enter {
     return;
 }
 
-for (qw/exitid roomid direction destination/) {
+sub JSONObj {
+    my $self = shift;
+    my $response = { name => $self->direction };
+    my $text = $self->direction;
+    $text = '&dArr;' if $text eq 'south';
+    $text = '&uArr;' if $text eq 'north';
+    $text = '&rArr;' if $text eq 'east';
+    $text = '&lArr;' if $text eq 'west';
+    $response->{text} = $text;
+    $response->{icon} = $self->icon if $self->icon;
+    my $class;
+    $class = 'dir_north' if $self->direction eq 'north';
+    $class = 'dir_south' if $self->direction eq 'south';
+    $class = 'dir_east'  if $self->direction eq 'east';
+    $class = 'dir_west'  if $self->direction eq 'west';
+    $response->{loc}->{class} = $class if $class;
+    # TODO - loc - style - needs storage/member var too - this is for specifying location for non-standard dirs
+
+    return $response;
+}
+
+# TODO - style
+for (qw/exitid roomid direction destination icon/) {
     my $attr = uc($_);
     eval "sub $_ {
             my \$self = shift;

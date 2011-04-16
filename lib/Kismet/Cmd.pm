@@ -39,6 +39,12 @@ sub popAllImmediateCommands {
     }
     $sth->finish;
 
+    return ( wantarray ? @commands : \@commands ) if !@commands;
+
+    $sth = $dbh->prepare('delete from system.command_queue where queue_id in (' . (join ',', map {"?"} @commands) . ')');
+    $sth->execute( map { $_->{QUEUE_ID} } @commands );
+    $sth->finish;
+
     return wantarray ? @commands : \@commands;
 }
 
@@ -54,6 +60,12 @@ sub popAllMovementCommands {
     while( my $href = $sth->fetchrow_hashref() ) {
         $commands{$href->{CHARACTER}} = $href if !defined($commands{$href->{CHARACTER}}); 
     }
+    $sth->finish;
+
+    return ( wantarray ? @commands : \@commands ) if !@commands;
+
+    $sth = $dbh->prepare('delete from system.command_queue where queue_id in (' . (join ',', map {"?"} @commands) . ')');
+    $sth->execute( map { $_->{QUEUE_ID} } @commands );
     $sth->finish;
 
     my @commands = shuffle values %commands; # Shuffle them in random order to reduce any advantage to faster connections
@@ -72,6 +84,12 @@ sub popAllCombatCommands {
     while( my $href = $sth->fetchrow_hashref() ) {
         $commands{$href->{CHARACTER}} = $href if !defined($commands{$href->{CHARACTER}}); 
     }
+    $sth->finish;
+
+    return ( wantarray ? @commands : \@commands ) if !@commands;
+
+    $sth = $dbh->prepare('delete from system.command_queue where queue_id in (' . (join ',', map {"?"} @commands) . ')');
+    $sth->execute( map { $_->{QUEUE_ID} } @commands );
     $sth->finish;
 
     my @commands = shuffle values %commands; # Shuffle them in random order to reduce any advantage to faster connections

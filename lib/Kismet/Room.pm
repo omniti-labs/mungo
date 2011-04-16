@@ -22,6 +22,8 @@ sub loadFromId {
     my $self = shift;
 
     # TODO - load from database id
+    # is this even needed?
+    die "loadFromId not implemented";
 }
 
 sub loadFromHashRef {
@@ -122,6 +124,30 @@ sub get_players {
     return @{ $self->{left} } if $side eq "left";
     return @{ $self->{right} } if $side eq "right";
     return ( @{ $self->{left} }, @{ $self->{right} } ); # both sides
+}
+
+sub JSONObj {
+    my $self = shift;
+
+    my $response = { room_id => $self->roomid };
+    my @exits;
+    if( $self->{exits} ) {
+        while(  my ($key, $href) = each( %{$self->{exits}} ) ) {
+            push @exits, $href->JSONObj();
+        }
+        $response->{exits} = \@exits;
+    }
+    # TODO - objects
+    # TODO - left / right
+=pod
+                     exits => [  { text => '&uArr;',   name => 'north', loc => { style =>  { top => '-3%', left => '15%' }, }, },
+                                        { text => '&rArr;',   name => 'east', loc => { class => 'dir_east' }, },
+                                        { text => '&lArr;',   name => 'west', loc => { class => 'dir_west' }, },
+                                        { text => '&dArr;',   name => 'south', loc => { class => 'dir_south' }, },
+                            ],
+                   };
+=cut
+    return $response;
 }
 
 for (qw/roomid title description/) {
