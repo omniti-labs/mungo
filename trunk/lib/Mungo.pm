@@ -276,9 +276,7 @@ use vars qw/$VERSION
             $DEFAULT_POST_BLOCK_SIZE $DEFAULT_POST_MAX_SIZE
             $DEFAULT_POST_MAX_PART $DEFAULT_POST_MAX_IN_MEMORY/;
 
-my $SVN_VERSION = 0;
-$SVN_VERSION = $1 if(q$Revision$ =~ /(\d+)/);
-$VERSION = "1.1.0.${SVN_VERSION}";
+$VERSION = "1.1.0." . (qw$Revision$)[1];
 
 $DEFAULT_POST_BLOCK_SIZE = 1024*32;          # 32k
 $DEFAULT_POST_MAX_SIZE = 0;             # unlimited post size
