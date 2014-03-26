@@ -566,6 +566,7 @@ sub packagize {
       my $Request = $self->Request();
       my $Response = $self->Response();
       my $Server = $self->Server();
+#line 1 ^.$filename_hint.q^
 ^;
   my $postamble = q^
     }
@@ -606,14 +607,14 @@ sub convertStringToExpression {
   my $string = $$string_ref;
   sub __string_as_i18n {
     return '' unless(length($_[0]));
-    my $s = Dumper($_[0]);
+    my $s = Data::Dumper->new([$_[0]])->Indent(0)->Dump;
     substr($s, 0, 7) = '<%= $main::Response->i18n(';
-    substr($s, -2, 2) = ') %>';
+    substr($s, -1, 1) = ') %>';
     return $s;
   }
   sub __string_as_print {
     return '' unless(length($_[0]));
-    my $s = Dumper($_[0]);
+    my $s = Data::Dumper->new([$_[0]])->Indent(0)->Dump;
     substr($s, 0, 7) = 'print';
     return $s;
   }
