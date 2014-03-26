@@ -1,0 +1,4 @@
+
+<%
+   $Response->Include('success.inc');
+%>

@@ -1,0 +1,10 @@
+Testing Mungo
+-------------------
+
+cd your-mungo-dist
+perl Makefile.PL -apxs `which apxs` # may be apxs2 on some systems
+make test
+
+Installing Mungo
+-------------------
+make install

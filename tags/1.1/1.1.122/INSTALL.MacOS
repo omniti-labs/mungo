@@ -1,0 +1,69 @@
+From: 	Brian Dunavant <brian@omniti.com>
+To: 	Clinton Wolfe <clinton@omniti.com>
+Subject: 	Mungo on Mac 10.5.8
+Date: 	08/13/2010 12:11:50 PM
+
+
+
+Just FYI, in case you want this for the docs on Mungo for installing it on MacOS.
+
+Get Mungo:
+
+new-host:mungo brian$ svn co https://labs.omniti.com/mungo/trunk .
+....
+
+make worked fine.
+
+Make test failed:
+
+new-host:mungo brian$ make test
+/usr/bin/perl -Iblib/arch -Iblib/lib \
+        t/TEST  -clean
+[warning] setting ulimit to allow core files
+ulimit -c unlimited; /usr/bin/perl /Users/bdunavant/mungo/t/TEST -clean
+APACHE_TEST_GROUP= APACHE_TEST_HTTPD= APACHE_TEST_PORT= APACHE_TEST_USER= APACHE_TEST_APXS= \
+        /usr/bin/perl -Iblib/arch -Iblib/lib \
+        t/TEST  -bugreport -verbose=0 
+[warning] setting ulimit to allow core files
+ulimit -c unlimited; /usr/bin/perl /Users/bdunavant/mungo/t/TEST -bugreport -verbose=0
+APXS (/usr/sbin) query for SBINDIR failed
+APXS (/usr/sbin) query for TARGET failed
+APXS (/usr/sbin) query for SYSCONFDIR failed
+[  error] You are using mod_perl response handlers 
+[  error] but do not have a mod_perl capable Apache.
+make: *** [run_tests] Error 1
+new-host:mungo brian$ make install
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ERROR: Can't create '/usr/local/share/man/man3'
+Do not have write permissions on '/usr/local/share/man/man3'
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ at -e line 1
+make: *** [pure_site_install] Error 13
+
+
+But I just sudo make installed it anyway.  Restarted apache.
+
+MacOS 10.5.8 when you install it, the install will go fine, but runtime errors in the error_log will be:
+
+[Fri Aug 13 11:40:44 2010] [error] [client 127.0.0.1] failed to resolve handler `Mungo': Can't load '/Library/Perl/Updates/5.8.8/darwin-thread-multi-2level/auto/Data/Dumper/Dumper.bundle' for module Data::Dumper: dlopen(/Library/Perl/Updates/5.8.8/darwin-thread-multi-2level/auto/Data/Dumper/Dumper.bundle, 1): no suitable image found.  Did find:\n\t/Library/Perl/Updates/5.8.8/darwin-thread-multi-2level/auto/Data/Dumper/Dumper.bundle: no matching architecture in universal wrapper at /System/Library/Perl/5.8.8/darwin-thread-multi-2level/XSLoader.pm line 70.\n at /Library/Perl/Updates/5.8.8/darwin-thread-multi-2level/Data/Dumper.pm line 36\nCompilation failed in require at /Library/Perl/5.8.8/Mungo.pm line 258.\nBEGIN failed--compilation aborted at /Library/Perl/5.8.8/Mungo.pm line 258.\nCompilation failed in require at (eval 2) line 3.\n
+
+MacOS 10.5.8 uses perl 5.8.8 and only has 32bit versions of Data::Dumper.  Attempting to download the CPAN module and recompile it doesn't appear to help.  I'm not sure how to get a 64 bit version.
+
+10.5.8$ file Dumper.bundle 
+Dumper.bundle: Mach-O universal binary with 2 architectures
+Dumper.bundle (for architecture ppc7400):    Mach-O bundle ppc
+Dumper.bundle (for architecture i386):    Mach-O bundle i386
+
+
+This is because 10.5.8 Data::Dumper only compiles with 32bit versions but apache is running 64bit.   This is NOT a problem on Snow Leopard (10.6) because Dumper has the 64 bit version already.
+
+10.6$ file Dumper.bundle 
+Dumper.bundle: Mach-O universal binary with 3 architectures
+Dumper.bundle (for architecture x86_64):    Mach-O 64-bit bundle x86_64
+Dumper.bundle (for architecture i386):    Mach-O bundle i386
+Dumper.bundle (for architecture ppc7400):    Mach-O bundle ppc
+
+
+To get it to work I had to force Apache to run in 32 bit mode (at Theo's suggestion) by following the 3 simple steps here:
+http://stackoverflow.com/questions/261927/force-apache-httpd-to-run-in-32bit
+
