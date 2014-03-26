@@ -579,6 +579,10 @@ sub packagize {
   eval "\$${pkg}::Mungo_postamble = \$postamble;";
   eval "\$${pkg}::Mungo_contents = \$contents;";
 
+  open my $fh, ">/tmp/wibble";
+  print $fh "$preamble$expr$postamble";
+  close $fh;
+
   eval $preamble . $expr . $postamble;
   if($@) {
     my $error = $@;
@@ -628,7 +632,7 @@ sub convertStringToExpression {
               /
               ($1 eq '~') ? "print HTML::Entities::encode_entities($2,'<&>\"');" :
                 ($1 eq '=') ? 
-                  "print $2;" :           # This is <%= ... %>
+                  "print '',$2;" :        # This is <%= ... %>
                   "$2;"                   # This is <% ... %>
               /sexg;
   return $string;
