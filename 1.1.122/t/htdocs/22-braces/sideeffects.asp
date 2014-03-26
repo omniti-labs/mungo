@@ -1,0 +1,1 @@
+<%="ab";my $z="fred"%><%= scalar reverse $z %>
