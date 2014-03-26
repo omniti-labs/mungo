@@ -13,7 +13,7 @@ sub TIEHANDLE {
 }
 sub PRINT {
   my $self = shift;
-  my $output = shift;
+  my $output = join((defined($,)?$,:""), @_);
   $$self .= $output;
 }
 sub PRINTF {
