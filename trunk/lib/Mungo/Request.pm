@@ -184,8 +184,8 @@ sub QueryString {
       my ($k, $v) = split(/=/, $kv_pair, 2);
 
       # $v = uri_unescape($v); # If CPAN dep on URI::Escape were allowed
-      $v =~ s/%([0-9a-f]{2})/chr(hex($1))/ige;
       $v =~ s/\+/ /g;
+      $v =~ s/%([0-9a-f]{2})/chr(hex($1))/ige;
 
       if (exists($params{$k}) && ref($params{$k})) {
           push @{$params{$k}}, $v;
