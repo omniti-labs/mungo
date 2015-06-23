@@ -1,0 +1,33 @@
+#file:t/conf/extra.conf.in
+#-------------------------
+# this file will be Include-d by @ServerRoot@/conf/httpd.conf
+  
+# where Mungo can be found
+PerlSwitches -I@ServerRoot@/../blib
+
+# Required for some tests in group 13-errors
+PerlSwitches -I@ServerRoot@/htdocs/13-errors/lib
+
+# preload the module
+PerlModule Mungo
+
+# Always treat .asp files as Mungo, no matter where they are
+<FilesMatch \.asp$>
+   SetHandler perl-script
+   PerlHandler Mungo
+</FilesMatch>
+
+# For 03-running, make sure we can run Mungo even with other names
+<Location /03-running/mungo>
+   SetHandler perl-script
+   PerlHandler Mungo
+</Location>
+
+<LocationMatch /17-buffer/(buffer-via-conf|unbuffer-override-conf).asp>
+   PerlSetVar MungoBuffer 1
+</LocationMatch>
+
+<Location /18-quiet>
+   SetHandler perl-script
+   PerlHandler Mungo::Quiet
+</Location>
