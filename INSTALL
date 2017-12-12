@@ -1,6 +1,6 @@
 The usual:
 
-perl Makefile.PL
+perl Makefile.PL -apxs `which apxs` # may be apxs2 on some systems
 make
 make test
 sudo make install
