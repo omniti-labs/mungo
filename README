@@ -1,10 +1,34 @@
-Testing Mungo
--------------------
+# Mungo
 
-cd your-mungo-dist
-perl Makefile.PL -apxs `which apxs` # may be apxs2 on some systems
-make test
+Welcome to the Mungo project.  This is an "anti-framework" to make programming web pages under mod_perl as accessible as php.
 
-Installing Mungo
--------------------
-make install
+## What is Mungo? 
+
+To understand what Mungo is, you must first understand the difference between mod_php and mod_perl.  PHP is for serving PHP-enabled web pages, whereas mod_perl hooks into Apache and dictates the behavior of the server when different URIs are accessed.  In short, mod_perl is much more powerful than mod_php, but mod_php is extremely simple and the barrier to entry is low.
+
+Mungo aims to dramatically lower the barrier to entry when writing web pages with embedded perl code.  There is a wonderful project called [Apache::ASP](http://www.apache-asp.org) that brings the object model of ASP to perl and makes it very simple to write perl-enabled web pages.  Apache::ASP is grand, but some may have issues with (1) its GPL licensing and (2) its myriad of CPAN dependencies.  Mungo tries to solve less than Apache::ASP by avoiding a lot of the complicated features and leaving those to the user to implement more appropriately for their application.
+
+### What Mungo does: 
+
+ * Allows perl to be embedded in web pages with <% %> tags.
+ * Provides simplistic access to various aspects of the client request via a Mungo::Request object.
+ * Provides simplistic manipulation of the response via a Mungo::Response object.
+ * Handles query strings, post forms (urlencoded and multipart) as well as cookies.
+
+### What Mungo does not do: 
+
+ * Manages sessions (this may change in the future).
+   * Most apps are multi-server/clustered now and are using:
+     * a filesystem backing store for session data, which is just bad practice,
+     * a database, but that (in its simplest form) is a bottleneck,
+     * memcached, a good idea, but its purpose isn't perfectly matched for that,
+     * a cookie, which is perfect (the world's largest distributed database), but sometimes data just doesn't fit.
+ * XML/XSLT/etc.  It's perl, do it yourself.
+
+## Implementation Goals 
+
+While Mungo is very simple and has a very small featureset, the object APIs it does implement adhere closely to those present in Apache::ASP.  So, assuming you are not using sessions or the XML features, you should find few obstacles in making your application run under Mungo (it could be as simple as setting {{{PerlHandler Mungo}}} in your httpd.conf file).
+
+## License 
+
+Mungo is released under a new BSD license.  See our [license](../blob/master/LICENSE) for details.
